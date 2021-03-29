@@ -370,7 +370,7 @@ export class Orders {
      * @when Until IBKR releases a new OrderId, then order is placed and process can pick other orders
      */
     public placeOrder = async (
-        stockOrder: OrderStock,
+        stockOrder: OrderGeneral,
         options?: {unique: boolean}
     ): Promise<any> => {
         const self = this;
