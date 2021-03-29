@@ -1,7 +1,7 @@
 import 'mocha';
 import {expect} from 'chai';
 import {Orders} from './Orders';
-import {OrderStock, OrderWithContract, OrderStatus} from './orders.interfaces';
+import { OrderGeneral, OrderWithContract, OrderStatus } from './orders.interfaces';
 import {IbkrEvents, IBKREVENTS} from '../events';
 import ibkr from '..';
 import {log} from '../log';
@@ -13,7 +13,7 @@ const symbolX = 'PECK';
 const symbolY = 'ACHC'; // portfolio
 const orderParams = [1];
 
-const stockOrderBuyInZ: OrderStock = {
+const stockOrderBuyInZ: OrderGeneral = {
     symbol: symbol,
     action: 'BUY',
     type: 'market',
@@ -23,7 +23,7 @@ const stockOrderBuyInZ: OrderStock = {
     exitTrade: false,
 };
 
-const stockOrderBuyInX: OrderStock = {
+const stockOrderBuyInX: OrderGeneral = {
     symbol: symbolX,
     action: 'BUY',
     type: 'market',
@@ -33,7 +33,7 @@ const stockOrderBuyInX: OrderStock = {
     exitTrade: false,
 };
 
-const stockOrderBuyInY: OrderStock = {
+const stockOrderBuyInY: OrderGeneral = {
     symbol: symbolY,
     action: 'BUY',
     type: 'market',

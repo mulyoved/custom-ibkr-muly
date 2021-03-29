@@ -2,9 +2,18 @@ import {ContractObject} from '../contracts';
 
 export type action = 'BUY' | 'SELL';
 
-export type ContractType = 'future' | 'option' | 'stock' | 'combo' | 'cfd' | 'forex' | 'ind';
+export type ContractType =
+    | 'fop'
+    | 'future'
+    | 'option'
+    | 'stock'
+    | 'combo'
+    | 'cfd'
+    | 'forex'
+    | 'ind';
 
 export const ContractEnum = {
+    FOP: 'fop' as ContractType,
     FUTURE: 'future' as ContractType,
     OPTION: 'option' as ContractType,
     STOCK: 'stock' as ContractType,

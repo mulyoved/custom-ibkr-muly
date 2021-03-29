@@ -526,8 +526,9 @@ export class Orders {
             type ind = ReturnType<typeof ib.contract.ind>;
             type future = ReturnType<typeof ib.contract.future>;
             type option = ReturnType<typeof ib.contract.option>;
+            type fop = ReturnType<typeof ib.contract.fop>;
 
-            type ValidTypes = stock | cfd | combo | forex | ind | future | option;
+            type ValidTypes = stock | cfd | combo | forex | ind | future | option | fop;
 
             const dict: ContractDictionary<ValidTypes> = {
                 [ContractEnum.STOCK]: ib.contract.stock(stockOrder.symbol),
@@ -542,6 +543,12 @@ export class Orders {
                     stockOrder.right
                 ),
                 [ContractEnum.FUTURE]: ib.contract.future(stockOrder.symbol, stockOrder.expiry),
+                [ContractEnum.FOP]: ib.contract.fop(
+                    stockOrder.symbol,
+                    stockOrder.expiry,
+                    stockOrder.strike,
+                    stockOrder.right
+                ),
             };
 
             // Place order
