@@ -10,6 +10,10 @@ import {
     OrderStatus,
     OrderStatusType,
     OrderStock,
+    OrderGeneral,
+    ContractDictionary,
+    ContractType,
+    ContractEnum,
 } from './orders.interfaces';
 
 import {publishDataToTopic, IbkrEvents, IBKREVENTS} from '../events';
@@ -43,7 +47,7 @@ export class Orders {
      * Orders to be taken from nextValidId
      * These are always deleted after order is submitted to IB
      */
-    stockOrders: OrderStock[] = [];
+    stockOrders: OrderGeneral[] = [];
 
     timeoutRetries: {[x: string]: NodeJS.Timeout[]} = {};
 
@@ -467,7 +471,7 @@ export class Orders {
             return true;
         };
 
-        const handleOrderIdNext = (orderIdNext: number) => {
+        const handleOrderIdNext = (orderIdNext: number, contractType: ContractType) => {
             const tickerToUse = ++orderIdNext;
 
             const currentOrders = self.stockOrders;
@@ -515,10 +519,35 @@ export class Orders {
                 stockOrderRequest: stockOrder, // for reference when closing trade,
             };
 
+            type stock = ReturnType<typeof ib.contract.stock>;
+            type cfd = ReturnType<typeof ib.contract.cfd>;
+            type combo = ReturnType<typeof ib.contract.combo>;
+            type forex = ReturnType<typeof ib.contract.forex>;
+            type ind = ReturnType<typeof ib.contract.ind>;
+            type future = ReturnType<typeof ib.contract.future>;
+            type option = ReturnType<typeof ib.contract.option>;
+
+            type ValidTypes = stock | cfd | combo | forex | ind | future | option;
+
+            const dict: ContractDictionary<ValidTypes> = {
+                [ContractEnum.STOCK]: ib.contract.stock(stockOrder.symbol),
+                [ContractEnum.CFD]: ib.contract.cfd(stockOrder.symbol),
+                [ContractEnum.COMBO]: ib.contract.combo(stockOrder.symbol),
+                [ContractEnum.FOREX]: ib.contract.forex(stockOrder.symbol, stockOrder.currency),
+                [ContractEnum.IND]: ib.contract.ind(stockOrder.symbol),
+                [ContractEnum.OPTION]: ib.contract.option(
+                    stockOrder.symbol,
+                    stockOrder.expiry,
+                    stockOrder.strike,
+                    stockOrder.right
+                ),
+                [ContractEnum.FUTURE]: ib.contract.future(stockOrder.symbol, stockOrder.expiry),
+            };
+
             // Place order
             ib.placeOrder(
                 tickerToUse,
-                ib.contract.stock(stockOrder.symbol),
+                dict[contractType],
                 orderCommand(stockOrder.action, ...args)
             );
 

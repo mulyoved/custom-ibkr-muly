@@ -2,6 +2,22 @@ import {ContractObject} from '../contracts';
 
 export type action = 'BUY' | 'SELL';
 
+export type ContractType = 'future' | 'option' | 'stock' | 'combo' | 'cfd' | 'forex' | 'ind';
+
+export const ContractEnum = {
+    FUTURE: 'future' as ContractType,
+    OPTION: 'option' as ContractType,
+    STOCK: 'stock' as ContractType,
+    COMBO: 'combo' as ContractType,
+    CFD: 'cfd' as ContractType,
+    FOREX: 'forex' as ContractType,
+    IND: 'ind' as ContractType,
+};
+
+export interface ContractDictionary<T> {
+    [key: string]: T;
+}
+
 // https://interactivebrokers.github.io/tws-api/interfaceIBApi_1_1EWrapper.html#a17f2a02d6449710b6394d0266a353313
 export type OrderStatusType =
     | 'PendingSubmit' // indicates that you have transmitted the order, but have not yet received confirmation that it has been accepted by the order destination.
@@ -147,6 +163,24 @@ export interface OrderStock {
         exitTime: Date;
         exitPrice: number;
     };
+}
+
+/**
+ * Option types.
+ */
+export enum OptionType {
+    /** Put option. */
+    Put = 'P',
+
+    /** Call option. */
+    Call = 'C',
+}
+
+export interface OrderGeneral extends OrderStock {
+    currency?: string;
+    expiry?: string;
+    strike?: string;
+    right?: OptionType;
 }
 
 // CREATE Sale
