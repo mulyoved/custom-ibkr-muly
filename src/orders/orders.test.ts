@@ -5,6 +5,7 @@ import { OrderGeneral, OrderWithContract, OrderStatus } from './orders.interface
 import {IbkrEvents, IBKREVENTS} from '../events';
 import ibkr from '..';
 import {log} from '../log';
+import { OptionType } from '.';
 
 const ibkrEvents = IbkrEvents.Instance;
 
@@ -21,6 +22,19 @@ const stockOrderBuyInZ: OrderGeneral = {
     size: 3,
     capital: 1000,
     exitTrade: false,
+};
+
+const stockOrderBuyInM: OrderGeneral = {
+    symbol: "GOOG",
+    action: 'BUY',
+    type: 'market',
+    parameters: orderParams, // 'SELL', 1, 9999,
+    size: 3,
+    capital: 1000,
+    exitTrade: false,
+    expiry: "20210401",
+    strike: "2055",
+    right: OptionType.Put
 };
 
 const stockOrderBuyInX: OrderGeneral = {
@@ -74,71 +88,71 @@ describe('Orders', () => {
         expect(results).to.be.not.null;
     });
 
-    // it('Place Order', (done) => {
+    it('Place Order', (done) => {
 
-    //     let completed = false;
-    //     const orderTrade = Orders.Instance;
+        let completed = false;
+        const orderTrade = Orders.Instance;
 
-    //     const getPlacedOrder = async () => {
-    //         const handleData = (data) => {
-    //             ibkrEvents.off(IBKREVENTS.ORDER_FILLED, handleData);
-    //             if (!completed) {
-    //                 done()
-    //                 completed = true;
-    //             }
-    //         };
-    //         // ibkrEvents.on(IBKREVENTS.ORDER_FILLED, handleData);
+        const getPlacedOrder = async () => {
+            const handleData = (data) => {
+                ibkrEvents.off(IBKREVENTS.ORDER_FILLED, handleData);
+                if (!completed) {
+                    done()
+                    completed = true;
+                }
+            };
+            // ibkrEvents.on(IBKREVENTS.ORDER_FILLED, handleData);
 
-    //         // ibkrEvents.on(IBKREVENTS.ORDER_STATUS, (data: { order: OrderWithContract, orderStatus: OrderStatus }) => {
+            // ibkrEvents.on(IBKREVENTS.ORDER_STATUS, (data: { order: OrderWithContract, orderStatus: OrderStatus }) => {
 
-    //         //     const { order, orderStatus } = data;
+            //     const { order, orderStatus } = data;
 
-    //         //     if (['PreSubmitted', 'Filled', 'Submitted'].includes(orderStatus.status)) {
-    //         //         console.log('filled')
-    //         //         if (!completed) {
-    //         //             done()
-    //         //             completed = true;
-    //         //         }
-    //         //     }
+            //     if (['PreSubmitted', 'Filled', 'Submitted'].includes(orderStatus.status)) {
+            //         console.log('filled')
+            //         if (!completed) {
+            //             done()
+            //             completed = true;
+            //         }
+            //     }
 
-    //         // });
+            // });
 
-    //         await Orders.Instance.getOpenOrders();
+            await Orders.Instance.getOpenOrders();
 
-    //         const delayTime = 1000;
+            const delayTime = 1000;
 
-    //         const opt = { unique: true };
+            const opt = { unique: true };
 
-    //         const orders = [
-    //             async () => orderTrade.placeOrder(stockOrderBuyInZ, opt),
-    //             async () => delay(delayTime),
-    //             async () => orderTrade.placeOrder(stockOrderBuyInZ, opt),
-    //             async () => delay(delayTime),
-    //             async () => orderTrade.placeOrder(stockOrderBuyInZ, opt),
-    //             async () => delay(delayTime),
-    //             async () => orderTrade.placeOrder(stockOrderBuyInY, opt),
-    //             async () => delay(delayTime),
-    //             async () => orderTrade.placeOrder(stockOrderBuyInY, opt),
-    //             async () => delay(delayTime),
-    //             async () => orderTrade.placeOrder(stockOrderBuyInY, opt),
-    //             async () => delay(delayTime),
-    //             async () => orderTrade.placeOrder(stockOrderBuyInX, opt),
-    //             async () => delay(delayTime),
-    //             async () => orderTrade.placeOrder(stockOrderBuyInX, opt),
-    //             async () => delay(delayTime),
-    //             async () => orderTrade.placeOrder(stockOrderBuyInX, opt),
-    //             async () => delay(delayTime),
-    //             async () => orderTrade.placeOrder(stockOrderBuyInX, opt),
-    //             async () => delay(delayTime),
-    //             async () => orderTrade.placeOrder(stockOrderBuyInY, opt)
-    //         ];
+            const orders = [
+                async () => orderTrade.placeOrder(stockOrderBuyInM, "option", opt),
+                async () => delay(delayTime),
+                async () => orderTrade.placeOrder(stockOrderBuyInM, "option", opt),
+                async () => delay(delayTime),
+                async () => orderTrade.placeOrder(stockOrderBuyInM, "option", opt),
+                // async () => delay(delayTime),
+                // async () => orderTrade.placeOrder(stockOrderBuyInY, "stock", opt),
+                // async () => delay(delayTime),
+                // async () => orderTrade.placeOrder(stockOrderBuyInY, "stock", opt),
+                // async () => delay(delayTime),
+                // async () => orderTrade.placeOrder(stockOrderBuyInY, "stock", opt),
+                // async () => delay(delayTime),
+                // async () => orderTrade.placeOrder(stockOrderBuyInX, "stock", opt),
+                // async () => delay(delayTime),
+                // async () => orderTrade.placeOrder(stockOrderBuyInX, "stock", opt),
+                // async () => delay(delayTime),
+                // async () => orderTrade.placeOrder(stockOrderBuyInX, "stock", opt),
+                // async () => delay(delayTime),
+                // async () => orderTrade.placeOrder(stockOrderBuyInX, "stock", opt),
+                // async () => delay(delayTime),
+                // async () => orderTrade.placeOrder(stockOrderBuyInY, "stock", opt)
+            ];
 
-    //         for (const order of orders) {
-    //             await order();
-    //         }
-    //     };
+            for (const order of orders) {
+                await order();
+            }
+        };
 
-    //     getPlacedOrder();
+        getPlacedOrder();
 
-    // });
+    });
 });

@@ -298,7 +298,7 @@ export class Orders {
             // placeOrder event
             ibkrEvents.on(
                 IBKREVENTS.PLACE_ORDER,
-                async ({stockOrder}: {stockOrder: OrderStock}) => {
+                async ({stockOrder}: {stockOrder: OrderGeneral}) => {
                     await self.placeOrder(stockOrder);
                 }
             );
@@ -371,6 +371,7 @@ export class Orders {
      */
     public placeOrder = async (
         stockOrder: OrderGeneral,
+        contractType?: ContractType,
         options?: {unique: boolean}
     ): Promise<any> => {
         const self = this;
@@ -471,7 +472,7 @@ export class Orders {
             return true;
         };
 
-        const handleOrderIdNext = (orderIdNext: number, contractType: ContractType) => {
+        const handleOrderIdNext = (orderIdNext: number) => {
             const tickerToUse = ++orderIdNext;
 
             const currentOrders = self.stockOrders;
