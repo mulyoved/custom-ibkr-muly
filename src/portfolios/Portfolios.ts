@@ -83,41 +83,39 @@ export class Portfolios {
             }
         );
 
-        ib.on('openOrder', function (
-            orderId,
-            contract: ContractObject,
-            order: ORDER,
-            orderState: OrderState
-        ) {
-            if (orderState.status === 'Filled') {
-                // check if portfolio exit, if not add it
-                const existingPortfolio = self.currentPortfolios.find(
-                    (porto) => porto.symbol === contract.symbol
-                );
-
-                if (isEmpty(existingPortfolio)) {
-                    // Add to currentPortfolios
-                    self.currentPortfolios.push({
-                        ...contract,
-                    });
-                } else {
-                    self.currentPortfolios = self.currentPortfolios.filter(
-                        (porto) => porto.symbol !== contract.symbol
+        ib.on(
+            'openOrder',
+            function (orderId, contract: ContractObject, order: ORDER, orderState: OrderState) {
+                if (orderState.status === 'Filled') {
+                    // check if portfolio exit, if not add it
+                    const existingPortfolio = self.currentPortfolios.find(
+                        (porto) => porto.symbol === contract.symbol
                     );
-                }
 
-                log(
-                    `Portfolio > openOrder FILLED`,
-                    ` -> ${contract.symbol} ${order.action} ${order.totalQuantity}  ${orderState.status}`
-                );
-                verbose(
-                    `Portfolio > ALL PORTFOLIOS`,
-                    ` -> ${JSON.stringify(self.currentPortfolios.map((por) => por.symbol))}`
-                );
-                // refresh the portfolios
-                self.getPortfolios();
+                    if (isEmpty(existingPortfolio)) {
+                        // Add to currentPortfolios
+                        self.currentPortfolios.push({
+                            ...contract,
+                        });
+                    } else {
+                        self.currentPortfolios = self.currentPortfolios.filter(
+                            (porto) => porto.symbol !== contract.symbol
+                        );
+                    }
+
+                    log(
+                        `Portfolio > openOrder FILLED`,
+                        ` -> ${contract.symbol} ${order.action} ${order.totalQuantity}  ${orderState.status}`
+                    );
+                    verbose(
+                        `Portfolio > ALL PORTFOLIOS`,
+                        ` -> ${JSON.stringify(self.currentPortfolios.map((por) => por.symbol))}`
+                    );
+                    // refresh the portfolios
+                    self.getPortfolios();
+                }
             }
-        });
+        );
 
         log('AccountID', accountId);
 
