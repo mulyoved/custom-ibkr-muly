@@ -9,11 +9,14 @@ import {
     OrderWithContract,
     OrderStatus,
     OrderStatusType,
-    OrderStock,
     OrderGeneral,
     ContractDictionary,
     ContractType,
     ContractEnum,
+    OrderFop,
+    OrderOption,
+    OrderFuture,
+    OrderForex,
 } from './orders.interfaces';
 
 import {publishDataToTopic, IbkrEvents, IBKREVENTS} from '../events';
@@ -32,14 +35,14 @@ interface SymbolTickerOrder {
     tickerId: number;
     orderPermId?: number; // for reference when closing it
     symbol: string;
-    stockOrderRequest: OrderStock;
+    contractOrderRequest: OrderGeneral;
     orderStatus?: OrderStatusType;
 }
 
 export class Orders {
     ib: IB = null;
 
-    // StockOrders
+    // ContractOrders
     tickerId = 0;
     processing = false;
 
@@ -47,7 +50,7 @@ export class Orders {
      * Orders to be taken from nextValidId
      * These are always deleted after order is submitted to IB
      */
-    stockOrders: OrderGeneral[] = [];
+    contractOrders: OrderGeneral[] = [];
 
     timeoutRetries: {[x: string]: NodeJS.Timeout[]} = {};
 
@@ -211,7 +214,7 @@ export class Orders {
                 // -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
                 // -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-                // 2. Update OrderStocks
+                // 2. Update OrderContracts
                 // Orders requests to send to transmit
                 // Using ticker Ids
                 // -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -243,11 +246,11 @@ export class Orders {
                     if (orderState.status === 'Filled') {
                         // Order is filled we can record it
                         // Check if we can create new trade
-                        // on if stockOrderRequest is present
+                        // on if contractOrderRequest is present
                         // that.symbolsTickerOrder[thisOrderTicker.symbol]
-                        if (!isEmpty(updatedSymbolTicker.stockOrderRequest)) {
-                            const {stockOrderRequest} = updatedSymbolTicker;
-                            const {exitTrade, exitParams, symbol, capital} = stockOrderRequest;
+                        if (!isEmpty(updatedSymbolTicker.contractOrderRequest)) {
+                            const {contractOrderRequest} = updatedSymbolTicker;
+                            const {exitTrade, exitParams, symbol, capital} = contractOrderRequest;
 
                             const dataSaleSymbolOrder: OrderWithContract = {
                                 ...order,
@@ -271,7 +274,7 @@ export class Orders {
                                 };
 
                                 log(
-                                    `AccountOrderStock.openOrder`,
+                                    `AccountOrderContract.openOrder`,
                                     `FILLED, TO CREATE SALE -> ${contract.symbol} ${order.action} ${order.totalQuantity}  ${orderState.status}`
                                 );
 
@@ -282,7 +285,7 @@ export class Orders {
                             }
 
                             log(
-                                `AccountOrderStock.openOrder`,
+                                `AccountOrderContract.openOrder`,
                                 `FILLED, but no sale created -> ${contract.symbol} ${order.action} ${order.totalQuantity}  ${orderState.status}`
                             );
 
@@ -298,8 +301,8 @@ export class Orders {
             // placeOrder event
             ibkrEvents.on(
                 IBKREVENTS.PLACE_ORDER,
-                async ({stockOrder}: {stockOrder: OrderGeneral}) => {
-                    await self.placeOrder(stockOrder);
+                async ({contractOrder}: {contractOrder: OrderGeneral}) => {
+                    await self.placeOrder(contractOrder);
                 }
             );
         }
@@ -331,26 +334,26 @@ export class Orders {
 
             self.ib.once('openOrderEnd', openOrderEnd);
 
-            self.ib.on('openOrder', function (
-                orderId,
-                contract,
-                order: ORDER,
-                orderState: OrderState
-            ) {
-                // Only check pending orders
-                if (['PendingSubmit', 'PreSubmitted', 'Submitted'].includes(orderState.status)) {
-                    openedOrders.push({
-                        // OrderId + orderState
-                        orderId,
-                        orderState,
+            self.ib.on(
+                'openOrder',
+                function (orderId, contract, order: ORDER, orderState: OrderState) {
+                    // Only check pending orders
+                    if (
+                        ['PendingSubmit', 'PreSubmitted', 'Submitted'].includes(orderState.status)
+                    ) {
+                        openedOrders.push({
+                            // OrderId + orderState
+                            orderId,
+                            orderState,
 
-                        // Add order
-                        ...order,
-                        // Add contract
-                        ...contract,
-                    });
+                            // Add order
+                            ...order,
+                            // Add contract
+                            ...contract,
+                        });
+                    }
                 }
-            });
+            );
 
             self.ib.reqAllOpenOrders(); // refresh orders
 
@@ -365,19 +368,21 @@ export class Orders {
     /**
      * Place Order
      * Order is added to queue if is already processing one order
-     * @stockOrder
+     * @contractOrder
+     * @contractType "fop" | "future" | "option" | "stock" | "combo" | "cfd" | "forex" | "ind"
+     * required in order to correctly place an order
      * @options ? {}
      * @when Until IBKR releases a new OrderId, then order is placed and process can pick other orders
      */
     public placeOrder = async (
-        stockOrder: OrderGeneral,
+        contractOrder: OrderGeneral,
         contractType?: ContractType,
         options?: {unique: boolean}
     ): Promise<any> => {
         const self = this;
         const ib = self.ib;
 
-        const {symbol} = stockOrder;
+        const {symbol} = contractOrder;
 
         const shouldBeUniqueOrder = (options && options.unique) || false;
 
@@ -396,12 +401,12 @@ export class Orders {
 
         const checkPending = (): boolean => {
             // -1 Validate size
-            const orderSize = stockOrder.size;
+            const orderSize = contractOrder.size;
 
             const orderIsPending = () => {
                 log(
                     'placingOrderNow',
-                    `*********************** Order is already being processed for ${stockOrder.action} symbol=${symbol} `
+                    `*********************** Order is already being processed for ${contractOrder.action} symbol=${symbol} `
                 );
                 return erroredOut();
             };
@@ -409,7 +414,7 @@ export class Orders {
             if (Number.isNaN(orderSize)) {
                 log(
                     'placingOrderNow.checkPending',
-                    `*********************** orderSize is NaN size=${orderSize} action=${stockOrder.action} symbol=${symbol}`
+                    `*********************** orderSize is NaN size=${orderSize} action=${contractOrder.action} symbol=${symbol}`
                 );
                 return erroredOut();
             }
@@ -456,14 +461,15 @@ export class Orders {
             if (!isEmpty(checkExistingOrders)) {
                 // check if we have the same order from here
                 const findMatchingAction = checkExistingOrders.filter(
-                    (exi) => exi.action === stockOrder.action && exi.symbol === stockOrder.symbol
+                    (exi) =>
+                        exi.action === contractOrder.action && exi.symbol === contractOrder.symbol
                 );
 
                 if (!isEmpty(findMatchingAction)) {
                     if (shouldBeUniqueOrder) {
                         log(
                             'placingOrderNow',
-                            `Order already exist for ${stockOrder.action}, ${findMatchingAction[0].symbol} ->  @${stockOrder.parameters[0]}`
+                            `Order already exist for ${contractOrder.action}, ${findMatchingAction[0].symbol} ->  @${contractOrder.parameters[0]}`
                         );
                         return erroredOut();
                     }
@@ -475,27 +481,27 @@ export class Orders {
         const handleOrderIdNext = (orderIdNext: number) => {
             const tickerToUse = ++orderIdNext;
 
-            const currentOrders = self.stockOrders;
+            const currentOrders = self.contractOrders;
 
             if (isEmpty(currentOrders)) {
-                log('handleOrderIdNext', `Stock Orders are empty`);
+                log('handleOrderIdNext', `Contract Orders are empty`);
                 return erroredOut();
             }
 
             // get order by it's tickerId
-            const stockOrder = self.stockOrders.shift();
+            const contractOrder = self.contractOrders.shift();
 
-            if (isEmpty(stockOrder)) {
-                log('handleOrderIdNext', `First Stock Orders Item is empty`);
+            if (isEmpty(contractOrder)) {
+                log('handleOrderIdNext', `First Contract Orders Item is empty`);
                 return erroredOut();
             }
 
-            const {symbol, size} = stockOrder;
+            const {symbol, size} = contractOrder;
 
             // eslint-disable-next-line @typescript-eslint/ban-types
-            const orderCommand: Function = ib.order[stockOrder.type];
+            const orderCommand: Function = ib.order[contractOrder.type];
 
-            const args = stockOrder.parameters;
+            const args = contractOrder.parameters;
 
             if (isEmpty(args)) {
                 log('handleOrderIdNext', `Arguments cannot be null`);
@@ -511,13 +517,13 @@ export class Orders {
                 return erroredOut();
             }
 
-            // Just save tickerId and stockOrder
+            // Just save tickerId and contractOrder
             const tickerNOrder: SymbolTickerOrder = {
                 id: tickerIdWithSymbol,
                 tickerId: tickerToUse,
                 symbol,
                 orderStatus: 'PendingSubmit',
-                stockOrderRequest: stockOrder, // for reference when closing trade,
+                contractOrderRequest: contractOrder, // for reference when closing trade,
             };
 
             type stock = ReturnType<typeof ib.contract.stock>;
@@ -532,23 +538,29 @@ export class Orders {
             type ValidTypes = stock | cfd | combo | forex | ind | future | option | fop;
 
             const dict: ContractDictionary<ValidTypes> = {
-                [ContractEnum.STOCK]: ib.contract.stock(stockOrder.symbol),
-                [ContractEnum.CFD]: ib.contract.cfd(stockOrder.symbol),
-                [ContractEnum.COMBO]: ib.contract.combo(stockOrder.symbol),
-                [ContractEnum.FOREX]: ib.contract.forex(stockOrder.symbol, stockOrder.currency),
-                [ContractEnum.IND]: ib.contract.ind(stockOrder.symbol),
-                [ContractEnum.OPTION]: ib.contract.option(
-                    stockOrder.symbol,
-                    stockOrder.expiry,
-                    stockOrder.strike,
-                    stockOrder.right
+                [ContractEnum.STOCK]: ib.contract.stock(contractOrder.symbol),
+                [ContractEnum.CFD]: ib.contract.cfd(contractOrder.symbol),
+                [ContractEnum.COMBO]: ib.contract.combo(contractOrder.symbol),
+                [ContractEnum.IND]: ib.contract.ind(contractOrder.symbol),
+                [ContractEnum.FOREX]: ib.contract.forex(
+                    contractOrder.symbol,
+                    (contractOrder as OrderForex).currency
                 ),
-                [ContractEnum.FUTURE]: ib.contract.future(stockOrder.symbol, stockOrder.expiry),
+                [ContractEnum.FUTURE]: ib.contract.future(
+                    contractOrder.symbol,
+                    (contractOrder as OrderFuture).expiry
+                ),
+                [ContractEnum.OPTION]: ib.contract.option(
+                    contractOrder.symbol,
+                    (contractOrder as OrderOption).expiry,
+                    (contractOrder as OrderOption).strike,
+                    (contractOrder as OrderOption).right
+                ),
                 [ContractEnum.FOP]: ib.contract.fop(
-                    stockOrder.symbol,
-                    stockOrder.expiry,
-                    stockOrder.strike,
-                    stockOrder.right
+                    contractOrder.symbol,
+                    (contractOrder as OrderFop).expiry,
+                    (contractOrder as OrderFop).strike,
+                    (contractOrder as OrderFop).right
                 ),
             };
 
@@ -556,7 +568,7 @@ export class Orders {
             ib.placeOrder(
                 tickerToUse,
                 dict[contractType],
-                orderCommand(stockOrder.action, ...args)
+                orderCommand(contractOrder.action, ...args)
             );
 
             // Add it
@@ -572,16 +584,45 @@ export class Orders {
         };
 
         function placingOrderNow(): void {
-            if (isEmpty(stockOrder.symbol)) {
+            if (isEmpty(contractOrder.symbol)) {
                 erroredOut(new Error('Please enter order'));
                 return;
             }
+            if (contractType === 'forex' && isEmpty((contractOrder as OrderForex).currency)) {
+                erroredOut(new Error('Please enter currency'));
+                return;
+            }
+            if (
+                (contractType === 'future' || 'fop' || 'option') &&
+                isEmpty((contractOrder as OrderFuture).expiry)
+            ) {
+                erroredOut(new Error('Please enter expiry'));
+                return;
+            }
+            if (
+                (contractType === 'fop' || 'option') &&
+                isEmpty((contractOrder as OrderOption).strike)
+            ) {
+                erroredOut(new Error('Please enter strike'));
+                return;
+            }
+            if (
+                (contractType === 'fop' || 'option') &&
+                isEmpty((contractOrder as OrderOption).right)
+            ) {
+                erroredOut(new Error('Please enter right'));
+                return;
+            }
+            if (contractType !== contractOrder.kind) {
+                erroredOut(new Error('Non matching contractType and contractOrder'));
+                return;
+            }
 
-            self.stockOrders.push(stockOrder);
+            self.contractOrders.push(contractOrder);
             self.ib.reqIds(++self.orderIdNext);
             verbose(
                 'placingOrderNow',
-                `Order > placeOrder -> tickerId=${self.tickerId} symbol=${stockOrder.symbol}`
+                `Order > placeOrder -> tickerId=${self.tickerId} symbol=${contractOrder.symbol}`
             );
         }
 

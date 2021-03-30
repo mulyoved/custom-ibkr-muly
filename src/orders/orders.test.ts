@@ -1,7 +1,7 @@
 import 'mocha';
 import {expect} from 'chai';
 import {Orders} from './Orders';
-import { OrderGeneral, OrderWithContract, OrderStatus } from './orders.interfaces';
+import { OrderWithContract, OrderStatus, OrderForex, OrderStock, OrderOption, OrderCfd, OrderCombo, OrderInd, OrderFuture, OrderFop } from './orders.interfaces';
 import {IbkrEvents, IBKREVENTS} from '../events';
 import ibkr from '..';
 import {log} from '../log';
@@ -9,13 +9,32 @@ import { OptionType } from '.';
 
 const ibkrEvents = IbkrEvents.Instance;
 
-const symbol = 'TSLA';
-const symbolX = 'PECK';
+const symbolZ = 'EUR';
+const symbolX = 'FB';
+const symbolXcfd = 'NFLX';
+const symbolXcombo = 'MMM';
+const symbolXind = 'SET';
+const symbolXfuture = 'ES';
+const symbolM = 'GOOG';
+const symbolMfop = 'MSFT';
 const symbolY = 'ACHC'; // portfolio
 const orderParams = [1];
 
-const stockOrderBuyInZ: OrderGeneral = {
-    symbol: symbol,
+const forexOrderBuyInZ: OrderForex = {
+    kind: "forex",
+    symbol: symbolZ,
+    action: 'BUY',
+    type: 'market',
+    parameters: orderParams, // 'SELL', 1, 9999,
+    size: 3,
+    capital: 1000,
+    exitTrade: false,
+    currency: "USD"
+};
+
+const stockOrderBuyInY: OrderStock = {
+    kind: "stock",
+    symbol: symbolY, // portfolio
     action: 'BUY',
     type: 'market',
     parameters: orderParams, // 'SELL', 1, 9999,
@@ -24,8 +43,20 @@ const stockOrderBuyInZ: OrderGeneral = {
     exitTrade: false,
 };
 
-const stockOrderBuyInM: OrderGeneral = {
-    symbol: "GOOG",
+const stockOrderBuyInX: OrderStock = {
+    kind: "stock",
+    symbol: symbolX,
+    action: 'BUY',
+    type: 'market',
+    parameters: orderParams, // 'SELL', 1, 9999,
+    size: 3,
+    capital: 1000,
+    exitTrade: false,
+};
+
+const optionOrderBuyInM: OrderOption = {
+    kind: "opt",
+    symbol: symbolM,
     action: 'BUY',
     type: 'market',
     parameters: orderParams, // 'SELL', 1, 9999,
@@ -37,8 +68,23 @@ const stockOrderBuyInM: OrderGeneral = {
     right: OptionType.Put
 };
 
-const stockOrderBuyInX: OrderGeneral = {
-    symbol: symbolX,
+const fopOrderBuyInM: OrderFop = {
+    kind: "fop",
+    symbol: symbolMfop,
+    action: 'BUY',
+    type: 'market',
+    parameters: orderParams, // 'SELL', 1, 9999,
+    size: 3,
+    capital: 1000,
+    exitTrade: false,
+    expiry: "20220121",
+    strike: "2055",
+    right: OptionType.Call
+};
+
+const cfdOrderBuyInX: OrderCfd = {
+    kind: "cfd",
+    symbol: symbolXcfd,
     action: 'BUY',
     type: 'market',
     parameters: orderParams, // 'SELL', 1, 9999,
@@ -47,14 +93,38 @@ const stockOrderBuyInX: OrderGeneral = {
     exitTrade: false,
 };
 
-const stockOrderBuyInY: OrderGeneral = {
-    symbol: symbolY,
+const comboOrderBuyInX: OrderCombo = {
+    kind: "combo",
+    symbol: symbolM,
     action: 'BUY',
     type: 'market',
     parameters: orderParams, // 'SELL', 1, 9999,
     size: 3,
     capital: 1000,
     exitTrade: false,
+};
+
+const indOrderBuyInX: OrderInd = {
+    kind: "ind",
+    symbol: symbolXind,
+    action: 'BUY',
+    type: 'market',
+    parameters: orderParams, // 'SELL', 1, 9999,
+    size: 3,
+    capital: 10000,
+    exitTrade: false,
+};
+
+const futureOrderBuyInX: OrderFuture = {
+    kind: "future",
+    symbol: "AMZN",
+    action: 'BUY',
+    type: 'market',
+    parameters: orderParams, // 'SELL', 1, 9999,
+    size: 3,
+    capital: 1000,
+    exitTrade: false,
+    expiry: "20210820"
 };
 
 function delay(t: number): Promise<any> {
@@ -124,23 +194,23 @@ describe('Orders', () => {
             const opt = { unique: true };
 
             const orders = [
-                async () => orderTrade.placeOrder(stockOrderBuyInM, "option", opt),
+                // async () => orderTrade.placeOrder(stockOrderBuyInX, "stock", opt),
+                // async () => delay(delayTime),
+                // async () => orderTrade.placeOrder(stockOrderBuyInY, "stock", opt), // portfolio
+                // async () => delay(delayTime),
+                // async () => orderTrade.placeOrder(forexOrderBuyInZ, "forex", opt),
+                // async () => delay(delayTime),
+                // async () => orderTrade.placeOrder(optionOrderBuyInM, "option", opt),
+                // async () => delay(delayTime),
+                // async () => orderTrade.placeOrder(fopOrderBuyInM, "fop", opt),
+                // async () => delay(delayTime),
+                // async () => orderTrade.placeOrder(cfdOrderBuyInX, "cfd", opt),
+                // async () => delay(delayTime),
+                // async () => orderTrade.placeOrder(indOrderBuyInX, "ind", opt),
+                // async () => delay(delayTime),
+                async () => orderTrade.placeOrder(futureOrderBuyInX, "future", opt),
                 async () => delay(delayTime),
-                async () => orderTrade.placeOrder(stockOrderBuyInM, "option", opt),
-                async () => delay(delayTime),
-                async () => orderTrade.placeOrder(stockOrderBuyInM, "option", opt),
-                // async () => delay(delayTime),
-                // async () => orderTrade.placeOrder(stockOrderBuyInY, "stock", opt),
-                // async () => delay(delayTime),
-                // async () => orderTrade.placeOrder(stockOrderBuyInY, "stock", opt),
-                // async () => delay(delayTime),
-                // async () => orderTrade.placeOrder(stockOrderBuyInY, "stock", opt),
-                // async () => delay(delayTime),
-                // async () => orderTrade.placeOrder(stockOrderBuyInX, "stock", opt),
-                // async () => delay(delayTime),
-                // async () => orderTrade.placeOrder(stockOrderBuyInX, "stock", opt),
-                // async () => delay(delayTime),
-                // async () => orderTrade.placeOrder(stockOrderBuyInX, "stock", opt),
+                // async () => orderTrade.placeOrder(comboOrderBuyInX, "combo", opt),
                 // async () => delay(delayTime),
                 // async () => orderTrade.placeOrder(stockOrderBuyInX, "stock", opt),
                 // async () => delay(delayTime),

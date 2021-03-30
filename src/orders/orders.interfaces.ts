@@ -23,10 +23,6 @@ export const ContractEnum = {
     IND: 'ind' as ContractType,
 };
 
-export interface ContractDictionary<T> {
-    [key: string]: T;
-}
-
 // https://interactivebrokers.github.io/tws-api/interfaceIBApi_1_1EWrapper.html#a17f2a02d6449710b6394d0266a353313
 export type OrderStatusType =
     | 'PendingSubmit' // indicates that you have transmitted the order, but have not yet received confirmation that it has been accepted by the order destination.
@@ -154,7 +150,7 @@ export type OrderType =
     | 'stopLimit' // .order.stopLimit(action, quantity, limitPrice, stopPrice, transmitOrder, parentId, tif)
     | 'trailingStop'; // .order.trailingStop(action, quantity, auxPrice, tif, transmitOrder, parentId)
 
-export interface OrderStock {
+interface OrderBase {
     symbol: string;
     action: OrderAction;
     type: OrderType;
@@ -174,6 +170,57 @@ export interface OrderStock {
     };
 }
 
+interface OrderOptBase extends OrderBase {
+    strike: string;
+    right: OptionType;
+    expiry: string; // "20210423"
+}
+
+export interface OrderStock extends OrderBase {
+    kind: 'stock';
+}
+
+export interface OrderCfd extends OrderBase {
+    kind: 'cfd';
+}
+
+export interface OrderCombo extends OrderBase {
+    kind: 'combo';
+}
+
+export interface OrderInd extends OrderBase {
+    kind: 'ind';
+}
+
+export interface OrderForex extends OrderBase {
+    kind: 'forex';
+    currency: string; // "USD"
+}
+
+export interface OrderFuture extends OrderBase {
+    kind: 'future';
+    expiry: string; // "20210423"
+}
+
+export interface OrderOption extends OrderOptBase {
+    kind: 'opt';
+}
+
+export interface OrderFop extends OrderOptBase {
+    kind: 'fop';
+    multiplier?: number;
+}
+
+export type OrderGeneral =
+    | OrderCfd
+    | OrderCombo
+    | OrderInd
+    | OrderForex
+    | OrderFuture
+    | OrderOption
+    | OrderFop
+    | OrderStock;
+
 /**
  * Option types.
  */
@@ -185,11 +232,8 @@ export enum OptionType {
     Call = 'C',
 }
 
-export interface OrderGeneral extends OrderStock {
-    currency?: string;
-    expiry?: string;
-    strike?: string;
-    right?: OptionType;
+export interface ContractDictionary<T> {
+    [key: string]: T;
 }
 
 // CREATE Sale
