@@ -186,6 +186,8 @@ export interface OrderCfd extends OrderBase {
 
 export interface OrderCombo extends OrderBase {
     kind: 'combo';
+    currency?: string;
+    exchange?: string;
 }
 
 export interface OrderInd extends OrderBase {
@@ -199,16 +201,23 @@ export interface OrderForex extends OrderBase {
 
 export interface OrderFuture extends OrderBase {
     kind: 'future';
-    expiry: string; // "20210423"
+    expiry: string; // "20210423" || "202104"
+    currency: string;
+    exchange: string;
+    multiplier: number;
 }
 
 export interface OrderOption extends OrderOptBase {
-    kind: 'opt';
+    kind: 'option';
+    currency?: string;
+    exchange?: string;
 }
 
 export interface OrderFop extends OrderOptBase {
     kind: 'fop';
     multiplier?: number;
+    exchange?: string;
+    currency?: string;
 }
 
 export type OrderGeneral =

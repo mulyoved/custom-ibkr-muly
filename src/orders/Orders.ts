@@ -17,6 +17,7 @@ import {
     OrderOption,
     OrderFuture,
     OrderForex,
+    OrderCombo,
 } from './orders.interfaces';
 
 import {publishDataToTopic, IbkrEvents, IBKREVENTS} from '../events';
@@ -496,6 +497,8 @@ export class Orders {
                 return erroredOut();
             }
 
+            console.log('le contract order', contractOrder);
+
             const {symbol, size} = contractOrder;
 
             // eslint-disable-next-line @typescript-eslint/ban-types
@@ -540,7 +543,11 @@ export class Orders {
             const dict: ContractDictionary<ValidTypes> = {
                 [ContractEnum.STOCK]: ib.contract.stock(contractOrder.symbol),
                 [ContractEnum.CFD]: ib.contract.cfd(contractOrder.symbol),
-                [ContractEnum.COMBO]: ib.contract.combo(contractOrder.symbol),
+                [ContractEnum.COMBO]: ib.contract.combo(
+                    contractOrder.symbol,
+                    (contractOrder as OrderCombo).currency,
+                    (contractOrder as OrderCombo).exchange
+                ),
                 [ContractEnum.IND]: ib.contract.ind(contractOrder.symbol),
                 [ContractEnum.FOREX]: ib.contract.forex(
                     contractOrder.symbol,
@@ -548,19 +555,27 @@ export class Orders {
                 ),
                 [ContractEnum.FUTURE]: ib.contract.future(
                     contractOrder.symbol,
-                    (contractOrder as OrderFuture).expiry
+                    (contractOrder as OrderFuture).expiry,
+                    (contractOrder as OrderFuture).currency,
+                    (contractOrder as OrderFuture).exchange,
+                    (contractOrder as OrderFuture).multiplier
                 ),
                 [ContractEnum.OPTION]: ib.contract.option(
                     contractOrder.symbol,
                     (contractOrder as OrderOption).expiry,
                     (contractOrder as OrderOption).strike,
-                    (contractOrder as OrderOption).right
+                    (contractOrder as OrderOption).right,
+                    (contractOrder as OrderOption).exchange,
+                    (contractOrder as OrderOption).currency
                 ),
                 [ContractEnum.FOP]: ib.contract.fop(
                     contractOrder.symbol,
                     (contractOrder as OrderFop).expiry,
                     (contractOrder as OrderFop).strike,
-                    (contractOrder as OrderFop).right
+                    (contractOrder as OrderFop).right,
+                    (contractOrder as OrderFop).multiplier,
+                    (contractOrder as OrderFop).exchange,
+                    (contractOrder as OrderFop).currency
                 ),
             };
 
@@ -570,6 +585,8 @@ export class Orders {
                 dict[contractType],
                 orderCommand(contractOrder.action, ...args)
             );
+            console.log('le contract optione', dict[contractType]);
+            console.log('le order command', orderCommand(contractOrder.action, ...args));
 
             // Add it
             self.tickersAndOrders.push(tickerNOrder);
@@ -580,46 +597,60 @@ export class Orders {
                 'handleOrderIdNext',
                 `Placing order for ... tickerToUse=${tickerToUse} orderIdNext=${orderIdNext} tickerId=${self.tickerId} symbol=${symbol} size=${size}`
             );
+            console.log(
+                `Placing order for ... tickerToUse=${tickerToUse} orderIdNext=${orderIdNext} tickerId=${self.tickerId} symbol=${symbol} size=${size}`
+            );
             return success();
         };
 
         function placingOrderNow(): void {
             if (isEmpty(contractOrder.symbol)) {
+                console.log('no symbol');
                 erroredOut(new Error('Please enter order'));
                 return;
             }
-            if (contractType === 'forex' && isEmpty((contractOrder as OrderForex).currency)) {
+            if (contractType === 'forex' && !(contractOrder as OrderForex).currency) {
+                console.log('no curr');
                 erroredOut(new Error('Please enter currency'));
                 return;
             }
             if (
-                (contractType === 'future' || 'fop' || 'option') &&
-                isEmpty((contractOrder as OrderFuture).expiry)
+                (contractType === 'future' ||
+                    contractType === 'fop' ||
+                    contractType === 'option') &&
+                !(contractOrder as OrderFuture).expiry
             ) {
+                console.log('no expiry');
                 erroredOut(new Error('Please enter expiry'));
                 return;
             }
             if (
-                (contractType === 'fop' || 'option') &&
-                isEmpty((contractOrder as OrderOption).strike)
+                (contractType === 'fop' || contractType === 'option') &&
+                !(contractOrder as OrderOption).strike
             ) {
+                console.log('no strike');
                 erroredOut(new Error('Please enter strike'));
                 return;
             }
             if (
-                (contractType === 'fop' || 'option') &&
-                isEmpty((contractOrder as OrderOption).right)
+                (contractType === 'fop' || contractType === 'option') &&
+                !(contractOrder as OrderOption).right
             ) {
+                console.log('no right');
                 erroredOut(new Error('Please enter right'));
                 return;
             }
             if (contractType !== contractOrder.kind) {
+                console.log('no match', contractType, contractOrder.kind);
                 erroredOut(new Error('Non matching contractType and contractOrder'));
                 return;
             }
 
             self.contractOrders.push(contractOrder);
             self.ib.reqIds(++self.orderIdNext);
+            console.log(
+                `Order > placeOrder -> tickerId=${self.tickerId} symbol=${contractOrder.symbol}`
+            );
             verbose(
                 'placingOrderNow',
                 `Order > placeOrder -> tickerId=${self.tickerId} symbol=${contractOrder.symbol}`
@@ -631,6 +662,7 @@ export class Orders {
 
             if (canProceed === true) {
                 if (self.processing) {
+                    console.log(`Broker is already processing an order for ${self.tickerId}`);
                     return log(
                         `Broker is already processing an order for ${self.tickerId}`,
                         symbol
@@ -655,7 +687,7 @@ export class Orders {
     cancelOrder = async (orderId: number): Promise<boolean> => {
         const self = this;
         const ib = self.ib;
-
+        console.log('Canceled order');
         return new Promise((res) => {
             const handleResults = (r: boolean) => {
                 if (r) {
