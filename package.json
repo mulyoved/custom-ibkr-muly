@@ -21,6 +21,7 @@
     "history": "mocha src/history/*test.ts --exit",
     "portfolios": "mocha src/portfolios/*test.ts --exit",
     "order": "mocha src/orders/*test.ts --exit",
+    "condition-order": "mocha src/orders/ConditionOrders/*test.ts --exit",
     "scanner": "mocha src/scanner/*test.ts --exit",
     "unit-test": "mocha src/**/*test.ts --exit",
     "test": "mocha src/*test.ts --exit",
@@ -98,6 +99,7 @@
   },
   "dependencies": {
     "@stoqey/ib": "^0.1.1",
+    "@stoqey/ib-updated": "npm:@stoqey/ib@1.1.31",
     "debug": "^4.1.1",
     "dotenv": "^8.2.0",
     "lodash": "^4.17.20",

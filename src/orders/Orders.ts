@@ -18,6 +18,7 @@ import {
     OrderFuture,
     OrderForex,
     OrderCombo,
+    ComboLeg,
 } from './orders.interfaces';
 
 import {publishDataToTopic, IbkrEvents, IBKREVENTS} from '../events';
@@ -497,8 +498,6 @@ export class Orders {
                 return erroredOut();
             }
 
-            console.log('le contract order', contractOrder);
-
             const {symbol, size} = contractOrder;
 
             // eslint-disable-next-line @typescript-eslint/ban-types
@@ -538,16 +537,21 @@ export class Orders {
             type option = ReturnType<typeof ib.contract.option>;
             type fop = ReturnType<typeof ib.contract.fop>;
 
-            type ValidTypes = stock | cfd | combo | forex | ind | future | option | fop;
+            type comboWithLegs = combo & {comboLegs: ComboLeg[]};
+
+            type ValidTypes = stock | cfd | comboWithLegs | forex | ind | future | option | fop;
 
             const dict: ContractDictionary<ValidTypes> = {
                 [ContractEnum.STOCK]: ib.contract.stock(contractOrder.symbol),
                 [ContractEnum.CFD]: ib.contract.cfd(contractOrder.symbol),
-                [ContractEnum.COMBO]: ib.contract.combo(
-                    contractOrder.symbol,
-                    (contractOrder as OrderCombo).currency,
-                    (contractOrder as OrderCombo).exchange
-                ),
+                [ContractEnum.COMBO]: {
+                    ...ib.contract.combo(
+                        contractOrder.symbol,
+                        (contractOrder as OrderCombo).currency,
+                        (contractOrder as OrderCombo).exchange
+                    ),
+                    comboLegs: (contractOrder as OrderCombo).comboLegs,
+                },
                 [ContractEnum.IND]: ib.contract.ind(contractOrder.symbol),
                 [ContractEnum.FOREX]: ib.contract.forex(
                     contractOrder.symbol,
@@ -580,13 +584,18 @@ export class Orders {
             };
 
             // Place order
-            ib.placeOrder(
-                tickerToUse,
-                dict[contractType],
-                orderCommand(contractOrder.action, ...args)
-            );
-            console.log('le contract optione', dict[contractType]);
-            console.log('le order command', orderCommand(contractOrder.action, ...args));
+            if (contractOrder.kind === 'combo') {
+                ib.placeOrder(tickerToUse, dict[contractType], {
+                    ...orderCommand(contractOrder.action, ...args),
+                    smartComboRoutingParams: contractOrder.smartComboRoutingParams,
+                });
+            } else {
+                ib.placeOrder(
+                    tickerToUse,
+                    dict[contractType],
+                    orderCommand(contractOrder.action, ...args)
+                );
+            }
 
             // Add it
             self.tickersAndOrders.push(tickerNOrder);
@@ -597,20 +606,16 @@ export class Orders {
                 'handleOrderIdNext',
                 `Placing order for ... tickerToUse=${tickerToUse} orderIdNext=${orderIdNext} tickerId=${self.tickerId} symbol=${symbol} size=${size}`
             );
-            console.log(
-                `Placing order for ... tickerToUse=${tickerToUse} orderIdNext=${orderIdNext} tickerId=${self.tickerId} symbol=${symbol} size=${size}`
-            );
+
             return success();
         };
 
         function placingOrderNow(): void {
             if (isEmpty(contractOrder.symbol)) {
-                console.log('no symbol');
                 erroredOut(new Error('Please enter order'));
                 return;
             }
             if (contractType === 'forex' && !(contractOrder as OrderForex).currency) {
-                console.log('no curr');
                 erroredOut(new Error('Please enter currency'));
                 return;
             }
@@ -620,7 +625,6 @@ export class Orders {
                     contractType === 'option') &&
                 !(contractOrder as OrderFuture).expiry
             ) {
-                console.log('no expiry');
                 erroredOut(new Error('Please enter expiry'));
                 return;
             }
@@ -628,7 +632,6 @@ export class Orders {
                 (contractType === 'fop' || contractType === 'option') &&
                 !(contractOrder as OrderOption).strike
             ) {
-                console.log('no strike');
                 erroredOut(new Error('Please enter strike'));
                 return;
             }
@@ -636,21 +639,16 @@ export class Orders {
                 (contractType === 'fop' || contractType === 'option') &&
                 !(contractOrder as OrderOption).right
             ) {
-                console.log('no right');
                 erroredOut(new Error('Please enter right'));
                 return;
             }
             if (contractType !== contractOrder.kind) {
-                console.log('no match', contractType, contractOrder.kind);
                 erroredOut(new Error('Non matching contractType and contractOrder'));
                 return;
             }
 
             self.contractOrders.push(contractOrder);
             self.ib.reqIds(++self.orderIdNext);
-            console.log(
-                `Order > placeOrder -> tickerId=${self.tickerId} symbol=${contractOrder.symbol}`
-            );
             verbose(
                 'placingOrderNow',
                 `Order > placeOrder -> tickerId=${self.tickerId} symbol=${contractOrder.symbol}`
@@ -662,7 +660,6 @@ export class Orders {
 
             if (canProceed === true) {
                 if (self.processing) {
-                    console.log(`Broker is already processing an order for ${self.tickerId}`);
                     return log(
                         `Broker is already processing an order for ${self.tickerId}`,
                         symbol
@@ -687,7 +684,6 @@ export class Orders {
     cancelOrder = async (orderId: number): Promise<boolean> => {
         const self = this;
         const ib = self.ib;
-        console.log('Canceled order');
         return new Promise((res) => {
             const handleResults = (r: boolean) => {
                 if (r) {

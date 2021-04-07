@@ -1,4 +1,7 @@
+import {ComboLeg, TagValue} from '@stoqey/ib-updated';
 import {ContractObject} from '../contracts';
+
+export {ComboLeg, TagValue} from '@stoqey/ib-updated';
 
 export type action = 'BUY' | 'SELL';
 
@@ -186,6 +189,66 @@ export interface OrderCfd extends OrderBase {
 
 export interface OrderCombo extends OrderBase {
     kind: 'combo';
+    comboLegs: ComboLeg[];
+    /**
+     * Advanced parameters for Smart combo routing.
+     *
+     * These features are for both guaranteed and non-guaranteed combination orders routed to Smart, and are available based on combo type and order type.
+     * SmartComboRoutingParams is similar to AlgoParams in that it makes use of tag/value pairs to add parameters to combo orders.
+     *
+     * Make sure that you fully understand how Advanced Combo Routing works in TWS itself first: https://www.interactivebrokers.com/en/software/tws/usersguidebook/specializedorderentry/advanced_combo_routing.htm
+     *
+     * The parameters cover the following capabilities:
+     *
+     * - Non-Guaranteed - Determine if the combo order is Guaranteed or Non-Guaranteed.
+     *
+     * Tag = NonGuaranteed
+     *
+     * Value = 0: The order is guaranteed
+     *
+     * Value = 1: The order is non-guaranteed
+     *
+     * - Select Leg to Fill First - User can specify which leg to be executed first.
+     *
+     * Tag = LeginPrio
+     *
+     * Value = -1: No priority is assigned to either combo leg
+     *
+     * Value = 0: Priority is assigned to the first leg being added to the comboLeg
+     *
+     * Value = 1: Priority is assigned to the second leg being added to the comboLeg
+     *
+     * Note: The LeginPrio parameter can only be applied to two-legged combo.
+     *
+     * - Maximum Leg-In Combo Size - Specify the maximum allowed leg-in size per segment
+     *
+     * Tag = MaxSegSize
+     *
+     * Value = Unit of combo size
+     *
+     * - Do Not Start Next Leg-In if Previous Leg-In Did Not Finish - Specify whether or not the system should attempt to fill the next segment before the current segment fills.
+     *
+     * Tag = DontLeginNext
+     *
+     *
+     * Value = 0: Start next leg-in even if previous leg-in did not finish
+     * Value = 1: Do not start next leg-in if previous leg-in did not finish
+     *
+     * - Price Condition - Combo order will be rejected or cancelled if the leg market price is outside of the specified price range [CondPriceMin, CondPriceMax]
+     *
+     * Tag = PriceCondConid: The ContractID of the combo leg to specify price condition on
+     *
+     * Value = The ContractID
+     *
+     * Tag = CondPriceMin: The lower price range of the price condition
+     *
+     * Value = The lower price
+     *
+     * Tag = CondPriceMax: The upper price range of the price condition
+     *
+     * Value = The upper price
+     */
+    smartComboRoutingParams: TagValue[];
     currency?: string;
     exchange?: string;
 }

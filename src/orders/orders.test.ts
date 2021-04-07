@@ -1,11 +1,12 @@
 import 'mocha';
 import {expect} from 'chai';
 import {Orders} from './Orders';
-import { OrderWithContract, OrderStatus, OrderForex, OrderStock, OrderOption, OrderCfd, OrderCombo, OrderInd, OrderFuture, OrderFop } from './orders.interfaces';
+import { OrderWithContract, OrderStatus, OrderForex, OrderStock, OrderOption, OrderCfd, OrderCombo, OrderInd, OrderFuture, OrderFop, ComboLeg, TagValue } from './orders.interfaces';
 import {IbkrEvents, IBKREVENTS} from '../events';
 import ibkr from '..';
 import {log} from '../log';
 import { OptionType } from '.';
+import { ContractDetailsParams, getContractDetails } from '../contracts';
 
 const ibkrEvents = IbkrEvents.Instance;
 
@@ -14,6 +15,8 @@ const symbolX = 'FB';
 const symbolXcfd = 'NFLX';
 const symbolXind = 'SET';
 const symbolY = 'ACHC'; // portfolio
+const symbolOpt = "GOOG";
+const symbolFut = "L";
 const orderParams = [1];
 
 const forexOrderBuyInZ: OrderForex = {
@@ -52,7 +55,7 @@ const stockOrderBuyInX: OrderStock = {
 
 const optionOrderBuyInM: OrderOption = {
     kind: "option",
-    symbol: "GOOG",
+    symbol: symbolOpt,
     action: 'BUY',
     type: 'market',
     parameters: orderParams, // 'SELL', 1, 9999,
@@ -75,16 +78,38 @@ const cfdOrderBuyInX: OrderCfd = {
     exitTrade: false,
 };
 
-const comboOrderBuyInX: OrderCombo = {
-    kind: "combo",
-    symbol: "MMM",
-    action: 'SELL',
-    type: 'limit',
-    parameters: [100, 193.97], // 'SELL', 1, 9999,
-    size: 100,
-    capital: 20000,
-    exitTrade: false
-};
+async function getAllContractDetails(): Promise<ComboLeg[]> {
+    let m_contract_object1: ContractDetailsParams = {
+        secType: 'STK',
+        symbol: 'EWA',
+        currency: 'USD',
+        exchange: 'SMART'
+    };
+    
+    let m_contract_object2: ContractDetailsParams = {
+        secType: 'STK',
+        symbol: 'EWC',
+        currency: 'USD',
+        exchange: 'SMART'
+    };
+    const cdetails1 = await getContractDetails(m_contract_object1)
+    const cdetails2 = await getContractDetails(m_contract_object2)
+
+    const leg1: ComboLeg = {
+        conId: cdetails1[0].summary.conId,
+        ratio: 1,
+        action: "BUY",
+        exchange: 'SMART'
+    }
+    const leg2: ComboLeg = {
+        conId: cdetails2[0].summary.conId,
+        ratio: 1,
+        action: "SELL",
+        exchange: 'SMART',
+    }
+
+    return [leg1, leg2];
+}
 
 const indOrderBuyInX: OrderInd = {
     kind: "ind",
@@ -99,7 +124,7 @@ const indOrderBuyInX: OrderInd = {
 
 const futureOrderBuyInX: OrderFuture = {
     kind: "future",
-    symbol: "L",
+    symbol: symbolFut,
     action: 'BUY',
     type: 'market',
     parameters: orderParams, // 'SELL', 1, 9999,
@@ -114,7 +139,7 @@ const futureOrderBuyInX: OrderFuture = {
 
 const fopOrderBuyInM: OrderFop = {
     kind: "fop",
-    symbol: "L",
+    symbol: symbolFut,
     action: 'BUY',
     type: 'market',
     parameters: orderParams, // 'SELL', 1, 9999,
@@ -195,6 +220,20 @@ describe('Orders', () => {
 
             const opt = { unique: true };
 
+            const tagValue: TagValue = { tag: 'NonGuaranteed', value: '1' };
+            const comboOrderBuyInX: OrderCombo = {
+                kind: "combo",
+                symbol: "EWA",
+                action: 'BUY',
+                type: 'market',
+                parameters: [1], // 'SELL', 1, 9999,
+                size: 1,
+                currency: 'USD',
+                exchange: 'SMART',
+                comboLegs: await getAllContractDetails(),
+                smartComboRoutingParams: [tagValue]
+            };
+
             const orders = [
                 async () => orderTrade.placeOrder(stockOrderBuyInX, "stock", opt),
                 async () => delay(delayTime),
@@ -212,7 +251,6 @@ describe('Orders', () => {
                 async () => delay(delayTime),
                 async () => orderTrade.placeOrder(fopOrderBuyInM, "fop", opt),
                 async () => delay(delayTime),
-
                 async () => orderTrade.placeOrder(comboOrderBuyInX, "combo", opt),
                 async () => delay(delayTime),
             ];
