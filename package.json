@@ -11,6 +11,7 @@
     "LICENSE"
   ],
   "scripts": {
+    "prepare": "npm run build",
     "lint": "tslint \"src/**/*.ts\" --project tsconfig.json",
     "build": "rimraf dist && tsc",
     "dev": "nodemon src/dev",
