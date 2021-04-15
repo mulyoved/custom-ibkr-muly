@@ -128,7 +128,10 @@ export class PriceUpdates {
     /**
      * @returns The `conId` of the contract subscribed to, or `undefined` if there was a failure.
      */
-    public async subscribe(args: ISubscribe): Promise<undefined | number> {
+    private async innerSubscribe(
+        args: ISubscribe,
+        isSnapshot: boolean
+    ): Promise<undefined | number> {
         const that = this;
         const ib = IBKRConnection.Instance.getIBKR();
 
@@ -206,11 +209,25 @@ export class PriceUpdates {
 
         // QUESTION: what is the reason for the waiting to call reqMktData till the next loop? -- ellis, 2020-12-27
         setImmediate(() => {
-            that.ib.reqMktData(tickerIdToUse, contract, '', false, false);
+            that.ib.reqMktData(tickerIdToUse, contract, '', isSnapshot, false);
             log('PriceUpdates.subscribe', `${conId}/${symbol} is successfully subscribed`);
         });
 
         return conId;
+    }
+
+    /**
+     * @returns The `conId` of the contract subscribed to, or `undefined` if there was a failure.
+     */
+    public async subscribe(args: ISubscribe): Promise<undefined | number> {
+        return await this.innerSubscribe(args, false);
+    }
+
+    /**
+     * @returns The `conId` of the contract subscribed to, or `undefined` if there was a failure.
+     */
+    public async requestSnapshot(args: ISubscribe): Promise<undefined | number> {
+        return await this.innerSubscribe(args, true);
     }
 
     public unsubscribeAllSymbols(): void {
