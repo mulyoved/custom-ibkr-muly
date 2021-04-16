@@ -5,25 +5,17 @@ export {ComboLeg, TagValue} from '@stoqey/ib-updated';
 
 export type action = 'BUY' | 'SELL';
 
-export type ContractType =
-    | 'fop'
-    | 'future'
-    | 'option'
-    | 'stock'
-    | 'combo'
-    | 'cfd'
-    | 'forex'
-    | 'ind';
+export type ContractType = 'FOP' | 'FUT' | 'OPT' | 'STK' | 'BAG' | 'CFD' | 'CASH' | 'IND';
 
 export const ContractEnum = {
-    FOP: 'fop' as ContractType,
-    FUTURE: 'future' as ContractType,
-    OPTION: 'option' as ContractType,
-    STOCK: 'stock' as ContractType,
-    COMBO: 'combo' as ContractType,
-    CFD: 'cfd' as ContractType,
-    FOREX: 'forex' as ContractType,
-    IND: 'ind' as ContractType,
+    FOP: 'FOP' as ContractType,
+    FUTURE: 'FUT' as ContractType,
+    OPTION: 'OPT' as ContractType,
+    STOCK: 'STK' as ContractType,
+    COMBO: 'BAG' as ContractType,
+    CFD: 'CFD' as ContractType,
+    FOREX: 'CASH' as ContractType,
+    IND: 'IND' as ContractType,
 };
 
 // https://interactivebrokers.github.io/tws-api/interfaceIBApi_1_1EWrapper.html#a17f2a02d6449710b6394d0266a353313
@@ -180,15 +172,15 @@ interface OrderOptBase extends OrderBase {
 }
 
 export interface OrderStock extends OrderBase {
-    kind: 'stock';
+    secType: 'STK';
 }
 
 export interface OrderCfd extends OrderBase {
-    kind: 'cfd';
+    secType: 'CFD';
 }
 
 export interface OrderCombo extends OrderBase {
-    kind: 'combo';
+    secType: 'BAG';
     comboLegs: ComboLeg[];
     /**
      * Advanced parameters for Smart combo routing.
@@ -254,16 +246,16 @@ export interface OrderCombo extends OrderBase {
 }
 
 export interface OrderInd extends OrderBase {
-    kind: 'ind';
+    secType: 'IND';
 }
 
 export interface OrderForex extends OrderBase {
-    kind: 'forex';
+    secType: 'CASH';
     currency: string; // "USD"
 }
 
 export interface OrderFuture extends OrderBase {
-    kind: 'future';
+    secType: 'FUT';
     expiry: string; // "20210423" || "202104"
     currency: string;
     exchange: string;
@@ -271,13 +263,13 @@ export interface OrderFuture extends OrderBase {
 }
 
 export interface OrderOption extends OrderOptBase {
-    kind: 'option';
+    secType: 'OPT';
     currency?: string;
     exchange?: string;
 }
 
 export interface OrderFop extends OrderOptBase {
-    kind: 'fop';
+    secType: 'FOP';
     multiplier?: number;
     exchange?: string;
     currency?: string;

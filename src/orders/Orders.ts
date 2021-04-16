@@ -584,7 +584,7 @@ export class Orders {
             };
 
             // Place order
-            if (contractOrder.kind === 'combo') {
+            if (contractOrder.secType === 'BAG') {
                 ib.placeOrder(tickerToUse, dict[contractType], {
                     ...orderCommand(contractOrder.action, ...args),
                     smartComboRoutingParams: contractOrder.smartComboRoutingParams,
@@ -616,34 +616,32 @@ export class Orders {
                 erroredOut(new Error('Please enter order'));
                 return;
             }
-            if (contractType === 'forex' && !(contractOrder as OrderForex).currency) {
+            if (contractType === 'CASH' && !(contractOrder as OrderForex).currency) {
                 erroredOut(new Error('Please enter currency'));
                 return;
             }
             if (
-                (contractType === 'future' ||
-                    contractType === 'fop' ||
-                    contractType === 'option') &&
+                (contractType === 'FUT' || contractType === 'FOP' || contractType === 'OPT') &&
                 !(contractOrder as OrderFuture).expiry
             ) {
                 erroredOut(new Error('Please enter expiry'));
                 return;
             }
             if (
-                (contractType === 'fop' || contractType === 'option') &&
+                (contractType === 'FOP' || contractType === 'OPT') &&
                 !(contractOrder as OrderOption).strike
             ) {
                 erroredOut(new Error('Please enter strike'));
                 return;
             }
             if (
-                (contractType === 'fop' || contractType === 'option') &&
+                (contractType === 'FOP' || contractType === 'OPT') &&
                 !(contractOrder as OrderOption).right
             ) {
                 erroredOut(new Error('Please enter right'));
                 return;
             }
-            if (contractType !== contractOrder.kind) {
+            if (contractType !== contractOrder.secType) {
                 erroredOut(new Error('Non matching contractType and contractOrder'));
                 return;
             }
