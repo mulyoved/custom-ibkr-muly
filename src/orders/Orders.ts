@@ -588,7 +588,6 @@ export class Orders {
                 ib.placeOrder(tickerToUse, dict[contractType], {
                     ...orderCommand(contractOrder.action, ...args),
                     smartComboRoutingParams: contractOrder.smartComboRoutingParams,
-                    transmit: true,
                 });
             } else {
                 ib.placeOrder(

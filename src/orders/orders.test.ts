@@ -20,7 +20,7 @@ const symbolFut = "L";
 const orderParams = [1];
 
 const forexOrderBuyInZ: OrderForex = {
-    kind: "forex",
+    secType: "CASH",
     symbol: symbolZ,
     action: 'BUY',
     type: 'market',
@@ -32,7 +32,7 @@ const forexOrderBuyInZ: OrderForex = {
 };
 
 const stockOrderBuyInY: OrderStock = {
-    kind: "stock",
+    secType: "STK",
     symbol: symbolY, // portfolio
     action: 'BUY',
     type: 'market',
@@ -43,7 +43,7 @@ const stockOrderBuyInY: OrderStock = {
 };
 
 const stockOrderBuyInX: OrderStock = {
-    kind: "stock",
+    secType: "STK",
     symbol: symbolX,
     action: 'BUY',
     type: 'market',
@@ -54,7 +54,7 @@ const stockOrderBuyInX: OrderStock = {
 };
 
 const optionOrderBuyInM: OrderOption = {
-    kind: "option",
+    secType: "OPT",
     symbol: symbolOpt,
     action: 'BUY',
     type: 'market',
@@ -68,7 +68,7 @@ const optionOrderBuyInM: OrderOption = {
 };
 
 const cfdOrderBuyInX: OrderCfd = {
-    kind: "cfd",
+    secType: "CFD",
     symbol: symbolXcfd,
     action: 'BUY',
     type: 'market',
@@ -112,7 +112,7 @@ async function getAllContractDetails(): Promise<ComboLeg[]> {
 }
 
 const indOrderBuyInX: OrderInd = {
-    kind: "ind",
+    secType: "IND",
     symbol: symbolXind,
     action: 'BUY',
     type: 'market',
@@ -123,7 +123,7 @@ const indOrderBuyInX: OrderInd = {
 };
 
 const futureOrderBuyInX: OrderFuture = {
-    kind: "future",
+    secType: "FUT",
     symbol: symbolFut,
     action: 'BUY',
     type: 'market',
@@ -138,7 +138,7 @@ const futureOrderBuyInX: OrderFuture = {
 };
 
 const fopOrderBuyInM: OrderFop = {
-    kind: "fop",
+    secType: "FOP",
     symbol: symbolFut,
     action: 'BUY',
     type: 'market',
@@ -222,11 +222,11 @@ describe('Orders', () => {
 
             const tagValue: TagValue = { tag: 'NonGuaranteed', value: '1' };
             const comboOrderBuyInX: OrderCombo = {
-                kind: "combo",
+                secType: "BAG",
                 symbol: "EWA",
                 action: 'BUY',
                 type: 'market',
-                parameters: [1], // 'SELL', 1, 9999,
+                parameters: [1, '110'], // 'SELL', 1, 9999,
                 size: 1,
                 currency: 'USD',
                 exchange: 'SMART',
@@ -235,23 +235,23 @@ describe('Orders', () => {
             };
 
             const orders = [
-                async () => orderTrade.placeOrder(stockOrderBuyInX, "stock", opt),
+                async () => orderTrade.placeOrder(stockOrderBuyInX, "STK", opt),
                 async () => delay(delayTime),
-                async () => orderTrade.placeOrder(stockOrderBuyInY, "stock", opt), // portfolio
+                async () => orderTrade.placeOrder(stockOrderBuyInY, "STK", opt), // portfolio
                 async () => delay(delayTime),
-                async () => orderTrade.placeOrder(forexOrderBuyInZ, "forex", opt),
+                async () => orderTrade.placeOrder(forexOrderBuyInZ, "CASH", opt),
                 async () => delay(delayTime),
-                async () => orderTrade.placeOrder(cfdOrderBuyInX, "cfd", opt),
+                async () => orderTrade.placeOrder(cfdOrderBuyInX, "CFD", opt),
                 async () => delay(delayTime),
-                async () => orderTrade.placeOrder(indOrderBuyInX, "ind", opt),
+                async () => orderTrade.placeOrder(indOrderBuyInX, "IND", opt),
                 async () => delay(delayTime),
-                async () => orderTrade.placeOrder(futureOrderBuyInX, "future", opt),
+                async () => orderTrade.placeOrder(futureOrderBuyInX, "FUT", opt),
                 async () => delay(delayTime),
-                async () => orderTrade.placeOrder(optionOrderBuyInM, "option", opt),
+                async () => orderTrade.placeOrder(optionOrderBuyInM, "OPT", opt),
                 async () => delay(delayTime),
-                async () => orderTrade.placeOrder(fopOrderBuyInM, "fop", opt),
+                async () => orderTrade.placeOrder(fopOrderBuyInM, "FOP", opt),
                 async () => delay(delayTime),
-                async () => orderTrade.placeOrder(comboOrderBuyInX, "combo", opt),
+                async () => orderTrade.placeOrder(comboOrderBuyInX, "BAG", opt),
                 async () => delay(delayTime),
             ];
 
