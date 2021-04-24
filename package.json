@@ -1,8 +1,8 @@
 {
-  "name": "@stoqey/ibkr",
+  "name": "custom-ibkr",
   "private": false,
-  "version": "1.8.1",
-  "description": "NodeJS Interactive Brokers wrapper & utilities",
+  "version": "1.8.3",
+  "description": "NodeJS Interactive Brokers wrapper & utilities - Custom Version",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [

@@ -17,7 +17,7 @@ import TimeCondition from './condition/time-condition';
 import VolumeCondition from './condition/volume-condition';
 import TriggerMethod from './enum/trigger-method';
 import ConjunctionConnection from './enum/conjunction-connection';
-import { OptionType, OrderOption } from '../orders.interfaces';
+import { OptionType, OrderWithContract } from '../orders.interfaces';
 import OrderAction from './enum/order-action';
 
 const ibkrEvents = IbkrEvents.Instance;
@@ -34,8 +34,8 @@ const contract: Contract = {
 const order: Order = {
     orderType: OrderTypeCondition.OrderType.LMT,
     action: OrderActionCondition.OrderAction.BUY,
-    totalQuantity: 100,
-    lmtPrice: 1,
+    totalQuantity: 10,
+    lmtPrice: 100,
     transmit: true,
     conditionsIgnoreRth: true,
     conditionsCancelOrder: false
@@ -43,8 +43,8 @@ const order: Order = {
 
 const optionContractBuyInM: Contract = {
     symbol: symbolOpt,
-    lastTradeDateOrContractMonth: "20210416",
-    strike: 2210,
+    lastTradeDateOrContractMonth: "20210618",
+    strike: 2000,
     right: OptionType.Put,
     exchange: 'SMART',
     secType: SecTypeCondition.OPT
@@ -56,6 +56,15 @@ const optionOrderBuyInM: Order = {
     totalQuantity: 3,
     conditionsIgnoreRth: true,
     conditionsCancelOrder: false
+};
+
+const optionOrderBuyInX: Order = {
+    action: OrderAction.BUY,
+    orderType: OrderTypeCondition.OrderType.LMT,
+    totalQuantity: 3,
+    lmtPrice: 100,
+    conditionsIgnoreRth: true,
+    conditionsCancelOrder: true
 };
 
 dotenv.config({path: '.env.test'});
@@ -145,7 +154,7 @@ describe('Condition Orders', () => {
             const execCondition: ExecutionCondition = new ExecutionCondition("ISLAND", SecTypeCondition.STK, "FB", ConjunctionConnection.OR);
             const marginCondition: MarginCondition = new MarginCondition(10, true, ConjunctionConnection.OR);
             const percentChangeCondition: PercentChangeCondition = new PercentChangeCondition(10, contracts[0].summary.conId, 'ISLAND', true, ConjunctionConnection.OR); // Exchange must be the same that the contract has
-            const timeCondition: TimeCondition = new TimeCondition("20210402 11:32:50", true, ConjunctionConnection.OR);
+            const timeCondition: TimeCondition = new TimeCondition("20210428 11:32:50", true, ConjunctionConnection.OR);
             const volumeCondition: VolumeCondition = new VolumeCondition(500, contracts[0].summary.conId, "SMART", true, ConjunctionConnection.AND) // Volume in values of hundreds E.g.: 100, 200, 300...
             
             order.conditions = [priceCondition, execCondition, marginCondition, percentChangeCondition, timeCondition, volumeCondition];
@@ -169,4 +178,81 @@ describe('Condition Orders', () => {
         await getPlacedOrder();
 
     });
+
+    it('Place bracket conditional order', async (done) => {
+        let completed = false;
+        const getPlacedOrder = async () => {
+            const handleData = (data) => {
+                ibkrEvents.off(IBKREVENTS.ORDER_FILLED, handleData);
+                if (!completed) {
+                    done()
+                    completed = true;
+                }
+            };
+
+            const conditionOrderInstance = ConditionOrders.Instance;
+        
+            log('Entered in callback');
+
+            const timeCondition: TimeCondition = new TimeCondition("20210428 11:32:50", true, ConjunctionConnection.OR);
+            
+            order.conditions = [timeCondition];
+
+            optionOrderBuyInM.conditions = [timeCondition];
+
+            const delayTime = 1000;
+
+            const orders = [
+                async () => conditionOrderInstance.placeBracketOrder(order, contract, order.lmtPrice + 5, order.lmtPrice - 5),
+                async () => delay(delayTime),
+                async () => conditionOrderInstance.placeBracketOrder(optionOrderBuyInX, optionContractBuyInM, optionOrderBuyInX.lmtPrice + 5, optionOrderBuyInX.lmtPrice - 5),
+                async () => delay(delayTime)
+            ];
+
+            for (const order of orders) {
+                await order();
+            }
+        };
+
+        await getPlacedOrder();
+    });
+
+    it('Should update bracket order', async (done) => {
+        const OrderInstance = Orders.Instance;
+        const conditionOrderInstance = ConditionOrders.Instance;
+        const results = await OrderInstance.getOpenOrders();
+        const parent: OrderWithContract = results.find( (orderRes) => orderRes.symbol === contract.symbol && orderRes.secType === contract.secType && orderRes.lmtPrice === order.lmtPrice && orderRes.action === order.action );
+        let stopLoss: OrderWithContract;
+        let takeProfit: OrderWithContract;
+    
+        const len = results.length;
+        for (let i = 0; i < len; i++) {
+            const value = results[i];
+            if (value.parentId === parent.orderId && value.orderType === parent.orderType) {
+                takeProfit = value;
+            }
+            if (value.parentId === parent.orderId && value.auxPrice < parent.lmtPrice) {
+                stopLoss = value
+            }
+        }
+        const cleanedTP = conditionOrderInstance.convertToOrder(takeProfit);
+        cleanedTP.lmtPrice = cleanedTP.lmtPrice - 2.5;
+        const cleanedSL = conditionOrderInstance.convertToOrder(stopLoss);
+        cleanedSL.auxPrice = cleanedSL.auxPrice + 2.5;
+        
+        const delayTime = 1000;
+
+        const orders = [
+            async () => conditionOrderInstance.placeOrder(cleanedTP, contract, takeProfit.orderId, true),
+            async () => delay(delayTime),
+            async () => conditionOrderInstance.placeOrder(cleanedSL, contract, stopLoss.orderId, true),
+            async () => delay(delayTime),
+        ];
+
+        for (const order of orders) {
+            await order();
+        }
+    });
+    
+    
 });

@@ -35,14 +35,14 @@ This is an event-based ibkr client for node
 
 ## 1. Install
 ```bash
-npm i @stoqey/ibkr
+npm i custom-ibkr
 ```
 
 ## 2. Usage
 
 ### Initialize
 ```ts
-import ibkr, { AccountSummary, IBKREVENTS, IbkrEvents, PortFolioUpdate, getContractDetails } from '@stoqey/ibkr';
+import ibkr, { AccountSummary, IBKREVENTS, IbkrEvents, PortFolioUpdate, getContractDetails } from 'custom-ibkr';
 
 const ibkrEvents = IbkrEvents.Instance;
 
@@ -92,7 +92,7 @@ ibkrEvents.on(IBKREVENTS.PORTFOLIOS, (porfolios: PortFolioUpdate[]) => {
 
 - Market data
 ```ts
-import { HistoricalData } from '@stoqey/ibkr';
+import { HistoricalData } from 'custom-ibkr';
 
 // 1. Init
 const historyApi = HistoricalData.Instance;
@@ -123,7 +123,7 @@ ibkrEvents.on(IBKREVENTS.ON_MARKET_DATA, ({ symbol, marketData }) => {
 
 - Real-time price updates
 ```ts
-import { PriceUpdates } from '@stoqey/ibkr';
+import { PriceUpdates } from 'custom-ibkr';
 
 PriceUpdates.Instance; // init
 
@@ -172,13 +172,13 @@ const contractDetails = await getContractDetails({
 
 ### Orders
 ```ts
-import { Orders, OrderStock } from '@stoqey/ibkr';
+import { Orders, OrderStock } from 'custom-ibkr';
 
 const orderTrade = Orders.Instance;
 
 const myStockOrder: OrderStock = { ... }
 
-const placedOrder = await orderTrade.placeOrder(myStockOrder);
+const placedOrder = await orderTrade.placeOrder(myStockOrder, 'STK');
           
 ```
 
@@ -225,7 +225,7 @@ ibkrEvents.on(IBKREVENTS.OPEN_ORDERS, (data) => {
 
 **Mosaic Scanner**
 ```ts
-import { MosaicScanner } from '@stoqey/ibkr';
+import { MosaicScanner } from 'custom-ibkr';
 const mosaicScanner = new MosaicScanner();
 
 const scannerData = await mosaicScanner.scanMarket({
