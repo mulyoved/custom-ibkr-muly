@@ -173,6 +173,7 @@ export class ConditionOrders {
 
     /**
      * Converts an order general object like an OrderStock into an Order that you can use with ConditionOrders placeOrder methods.
+     * NOTE: After converting, you will receive a few properties, please assign your desired properties in the returned Order.
      * @param order OrderGeneral to convert
      * @returns Order object compatible with conditions.
      */
