@@ -19,6 +19,7 @@ import TriggerMethod from './enum/trigger-method';
 import ConjunctionConnection from './enum/conjunction-connection';
 import { OptionType, OrderWithContract } from '../orders.interfaces';
 import OrderAction from './enum/order-action';
+import { TagValue, ComboLeg } from '@stoqey/ib-updated';
 
 const ibkrEvents = IbkrEvents.Instance;
 const symbol = "A"
@@ -202,7 +203,59 @@ describe('Condition Orders', () => {
 
             const delayTime = 1000;
 
+            const tagValue: TagValue = { tag: 'NonGuaranteed', value: '1' };
+            const comboOrderBuyInX: Order = {
+                action: OrderActionCondition.OrderAction.BUY,
+                orderType: OrderTypeCondition.OrderType.LMT,
+                lmtPrice: 100,
+                totalQuantity: 1,
+                smartComboRoutingParams: [tagValue]
+            };
+
+            async function getAllContractDetails(): Promise<ComboLeg[]> {
+                let m_contract_object1: ContractDetailsParams = {
+                    secType: 'STK',
+                    symbol: 'EWA',
+                    currency: 'USD',
+                    exchange: 'SMART'
+                };
+                
+                let m_contract_object2: ContractDetailsParams = {
+                    secType: 'STK',
+                    symbol: 'EWC',
+                    currency: 'USD',
+                    exchange: 'SMART'
+                };
+                const cdetails1 = await getContractDetails(m_contract_object1)
+                const cdetails2 = await getContractDetails(m_contract_object2)
+            
+                const leg1: ComboLeg = {
+                    conId: cdetails1[0].summary.conId,
+                    ratio: 1,
+                    action: "BUY",
+                    exchange: 'SMART'
+                }
+                const leg2: ComboLeg = {
+                    conId: cdetails2[0].summary.conId,
+                    ratio: 1,
+                    action: "SELL",
+                    exchange: 'SMART',
+                }
+            
+                return [leg1, leg2];
+            }
+
+            const comboCBuyInX: Contract = {
+                secType: SecTypeCondition.BAG,
+                symbol: "EWA",
+                currency: 'USD',
+                exchange: 'SMART',
+                comboLegs: await getAllContractDetails()
+            }
+
             const orders = [
+                async () => conditionOrderInstance.placeBracketOrder(comboOrderBuyInX, comboCBuyInX, comboOrderBuyInX.lmtPrice + 5, comboOrderBuyInX.lmtPrice - 5),
+                async () => delay(delayTime),
                 async () => conditionOrderInstance.placeBracketOrder(order, contract, order.lmtPrice + 5, order.lmtPrice - 5),
                 async () => delay(delayTime),
                 async () => conditionOrderInstance.placeBracketOrder(optionOrderBuyInX, optionContractBuyInM, optionOrderBuyInX.lmtPrice + 5, optionOrderBuyInX.lmtPrice - 5),
@@ -217,7 +270,7 @@ describe('Condition Orders', () => {
         await getPlacedOrder();
     });
 
-    it('Should update bracket order', async (done) => {
+    it('Update bracket order', async (done) => {
         const OrderInstance = Orders.Instance;
         const conditionOrderInstance = ConditionOrders.Instance;
         const results = await OrderInstance.getOpenOrders();
@@ -253,6 +306,5 @@ describe('Condition Orders', () => {
             await order();
         }
     });
-    
-    
+
 });

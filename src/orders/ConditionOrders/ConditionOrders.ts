@@ -2,7 +2,7 @@ import {IBApi, EventName, ErrorCode, Contract, Order, OrderAction} from '@stoqey
 import {IB_HOST, IB_PORT} from '../../config';
 import {IBKREVENTS} from '../../events';
 import {IbkrEvents} from '../../events/IbkrEvents';
-import {OrderWithContract, OrderGeneral, OrderType} from '../orders.interfaces';
+import {OrderWithContract, OrderGeneral, OrderType, OrderCombo} from '../orders.interfaces';
 import {OrderTypeCondition} from '..';
 
 const ibkrEvents = IbkrEvents.Instance;
@@ -62,8 +62,6 @@ export class ConditionOrders {
         orderUpdateId?: number,
         transmitUpd?: boolean
     ): Promise<void> => {
-        console.log('placeOrder Order: ', order);
-
         const self = this;
         const ib: IBApi = self.ib;
 
@@ -71,8 +69,6 @@ export class ConditionOrders {
             console.error(`${err.message} - code: ${code} - reqId: ${reqId}`, err.stack);
         }).once(EventName.nextValidId, (orderId: number) => {
             const setOrderId = orderUpdateId ? orderUpdateId : orderId;
-            console.log('SET ORDER ID: ', setOrderId);
-            console.log('ORDER UPDATE ID: ', orderUpdateId);
             const {transmit, ...orderWithoutTransmit} = order;
             const setTransmit = transmitUpd ? transmitUpd : transmit;
             const orderWithId: Order = {
@@ -122,6 +118,7 @@ export class ConditionOrders {
                 lmtPrice: takeProfitLimitPrice,
                 parentId: parentOrder.orderId,
                 transmit: false,
+                smartComboRoutingParams: order.smartComboRoutingParams,
             };
 
             const stopLoss: Order = {
@@ -135,10 +132,10 @@ export class ConditionOrders {
                 // In this case, the low side order will be the last child being sent. Therefore, it needs to set this attribute to true
                 // to activate all its predecessors
                 transmit,
+                smartComboRoutingParams: order.smartComboRoutingParams,
             };
 
             const orders = [parentOrder, takeProfit, stopLoss];
-
             orders.forEach((or) => {
                 ib.placeOrder(or.orderId, contract, or);
             });
@@ -174,6 +171,11 @@ export class ConditionOrders {
         return orderWithContract as Order;
     }
 
+    /**
+     * Converts an order general object like an OrderStock into an Order that you can use with ConditionOrders placeOrder methods.
+     * @param order OrderGeneral to convert
+     * @returns Order object compatible with conditions.
+     */
     public toNewOrder(order: OrderGeneral): Order {
         const convertedOrder: Order = {};
         switch (order.secType) {
@@ -189,10 +191,8 @@ export class ConditionOrders {
                 convertedOrder.action = order.action as any;
                 convertedOrder.totalQuantity = order.parameters[0];
                 convertedOrder.lmtPrice = order.parameters[1];
-                break;
             case 'BAG':
-                convertedOrder.orderComboLegs = order.comboLegs as any;
-                convertedOrder.smartComboRoutingParams = order.smartComboRoutingParams;
+                convertedOrder.smartComboRoutingParams = (order as OrderCombo).smartComboRoutingParams;
                 break;
             default:
                 break;
