@@ -144,9 +144,8 @@ export class ConditionOrders {
                     orderId: orderId + 3,
                     action:
                         orderWithoutTransmit.action === 'BUY' ? OrderAction.SELL : OrderAction.BUY,
-                    orderType: OrderTypeCondition.OrderType.LMT,
+                    orderType: OrderTypeCondition.OrderType.MKT,
                     totalQuantity: orderWithoutTransmit.totalQuantity,
-                    lmtPrice: orderWithoutTransmit.lmtPrice,
                     parentId: parentOrder.orderId,
                     conditions,
                     transmit,

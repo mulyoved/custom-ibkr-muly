@@ -19,7 +19,7 @@ import TriggerMethod from './enum/trigger-method';
 import ConjunctionConnection from './enum/conjunction-connection';
 import { OptionType, OrderWithContract } from '../orders.interfaces';
 import OrderAction from './enum/order-action';
-import { TagValue, ComboLeg } from '@stoqey/ib-updated';
+import { TagValue, ComboLeg, OrderCondition } from '@stoqey/ib-updated';
 
 const ibkrEvents = IbkrEvents.Instance;
 const symbol = "A"
@@ -253,10 +253,12 @@ describe('Condition Orders', () => {
                 comboLegs: await getAllContractDetails()
             }
 
+            const conditions: OrderCondition[] = [new TimeCondition('20210530 15:00:00', true, ConjunctionConnection.AND)]; 
+
             const orders = [
                 async () => conditionOrderInstance.placeBracketOrder(comboOrderBuyInX, comboCBuyInX, comboOrderBuyInX.lmtPrice + 5, comboOrderBuyInX.lmtPrice - 5),
                 async () => delay(delayTime),
-                async () => conditionOrderInstance.placeBracketOrder(order, contract, order.lmtPrice + 5, order.lmtPrice - 5),
+                async () => conditionOrderInstance.placeBracketOrder(order, contract, order.lmtPrice + 5, order.lmtPrice - 5, conditions),
                 async () => delay(delayTime),
                 async () => conditionOrderInstance.placeBracketOrder(optionOrderBuyInX, optionContractBuyInM, optionOrderBuyInX.lmtPrice + 5, optionOrderBuyInX.lmtPrice - 5),
                 async () => delay(delayTime)
