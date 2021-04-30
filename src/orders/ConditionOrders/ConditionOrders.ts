@@ -4,7 +4,7 @@ import {IBKREVENTS} from '../../events';
 import {IbkrEvents} from '../../events/IbkrEvents';
 import {OrderWithContract, OrderGeneral, OrderType, OrderCombo} from '../orders.interfaces';
 import {OrderTypeCondition} from '..';
-import OrderCondition from '../../../dist/orders/ConditionOrders/condition/order-condition';
+import OrderCondition from './condition/order-condition';
 
 const ibkrEvents = IbkrEvents.Instance;
 
