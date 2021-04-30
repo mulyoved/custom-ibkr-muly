@@ -4,6 +4,7 @@ import {IBKREVENTS} from '../../events';
 import {IbkrEvents} from '../../events/IbkrEvents';
 import {OrderWithContract, OrderGeneral, OrderType, OrderCombo} from '../orders.interfaces';
 import {OrderTypeCondition} from '..';
+import OrderCondition from '../../../dist/orders/ConditionOrders/condition/order-condition';
 
 const ibkrEvents = IbkrEvents.Instance;
 
@@ -93,7 +94,8 @@ export class ConditionOrders {
         order: Order,
         contract: Contract,
         takeProfitLimitPrice: number,
-        stopLossPrice: number
+        stopLossPrice: number,
+        conditions?: OrderCondition[]
     ): Promise<void> => {
         const self = this;
         const ib: IBApi = self.ib;
@@ -131,11 +133,28 @@ export class ConditionOrders {
                 parentId: parentOrder.orderId,
                 // In this case, the low side order will be the last child being sent. Therefore, it needs to set this attribute to true
                 // to activate all its predecessors
-                transmit,
+                transmit: false,
                 smartComboRoutingParams: order.smartComboRoutingParams,
             };
 
             const orders = [parentOrder, takeProfit, stopLoss];
+
+            if (conditions) {
+                const orderExit: Order = {
+                    orderId: orderId + 3,
+                    action:
+                        orderWithoutTransmit.action === 'BUY' ? OrderAction.SELL : OrderAction.BUY,
+                    orderType: OrderTypeCondition.OrderType.LMT,
+                    totalQuantity: orderWithoutTransmit.totalQuantity,
+                    lmtPrice: orderWithoutTransmit.lmtPrice,
+                    parentId: parentOrder.orderId,
+                    conditions,
+                    transmit,
+                    smartComboRoutingParams: order.smartComboRoutingParams,
+                };
+                orders.push(orderExit);
+            }
+
             orders.forEach((or) => {
                 ib.placeOrder(or.orderId, contract, or);
             });
