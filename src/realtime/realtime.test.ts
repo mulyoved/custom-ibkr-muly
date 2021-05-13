@@ -74,7 +74,6 @@ describe('Realtime', () => {
     });
 
     // it('should unsubscribe from updates for AAPL', (done) => {
-
     //     const symbol = 'AAPL';
 
     //     const getMarketData = () => {
@@ -89,11 +88,10 @@ describe('Realtime', () => {
     // });
 
     // it('should get price updates for forex updates ASK', (done) => {
-
     //     const contract = {
-    //         "symbol":"GBP",
-    //         "secType":"CASH",
-    //         "currency":"USD",
+    //         symbol: 'GBP',
+    //         secType: 'CASH',
+    //         currency: 'USD',
     //     };
 
     //     const getMarketData = () => {
@@ -103,7 +101,7 @@ describe('Realtime', () => {
     //         };
     //         ibkrEvents.on(IBKREVENTS.ON_PRICE_UPDATES, handleData);
 
-    //         ibkrEvents.emit(IBKREVENTS.SUBSCRIBE_PRICE_UPDATES, {contract, opt: { tickType: 'ASK' }});
+    //         ibkrEvents.emit(IBKREVENTS.SUBSCRIBE_PRICE_UPDATES, {contract, opt: {tickType: 'ASK'}});
 
     //         return setTimeout(() => {
     //             ibkrEvents.off(IBKREVENTS.ON_PRICE_UPDATES, handleData);
@@ -115,11 +113,10 @@ describe('Realtime', () => {
     // });
 
     // it('should get price updates for forex updates BID', (done) => {
-
     //     const contract = {
-    //         "symbol":"GBP",
-    //         "secType":"CASH",
-    //         "currency":"USD",
+    //         symbol: 'GBP',
+    //         secType: 'CASH',
+    //         currency: 'USD',
     //     };
 
     //     const getMarketData = () => {
