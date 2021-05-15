@@ -38,6 +38,7 @@ export interface SymbolWithData {
 }
 
 export interface PriceUpdatesEvent {
+    readonly tickerId: number;
     readonly tickType: TickPrice;
     readonly symbol: string;
     readonly price: number | null;

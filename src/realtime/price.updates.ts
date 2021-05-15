@@ -109,6 +109,7 @@ export class PriceUpdates {
                     );
 
                     const dataToPublish: PriceUpdatesEvent = {
+                        tickerId,
                         tickType: tickTypeWords as any,
                         symbol: currentSymbol,
                         price: price === -1 ? null : price,
@@ -126,12 +127,14 @@ export class PriceUpdates {
     }
 
     /**
-     * @returns The `conId` of the contract subscribed to, or `undefined` if there was a failure.
+     * @returns An array with the `conId` of the contract subscribed to, the `tickerId` assigned
+     * to the request, and the `symbol` of the contract,
+     * or `undefined` if there was a failure. Returned as `[conId, tickerId, symbol]`
      */
     private async innerSubscribe(
         args: ISubscribe,
         isSnapshot: boolean
-    ): Promise<undefined | number> {
+    ): Promise<undefined | [number, number, string]> {
         const that = this;
         const ib = IBKRConnection.Instance.getIBKR();
 
@@ -192,7 +195,7 @@ export class PriceUpdates {
         if (that.keyToTickerId[key]) {
             //  symbol is already subscribed
             verbose('PriceUpdates.subscribe', `${conId}/${symbol} is already subscribed`);
-            return conId;
+            return [conId, that.tickerIdToData[that.keyToTickerId[key]].tickerId, symbol];
         }
 
         // Assign random number for symbol
@@ -213,20 +216,24 @@ export class PriceUpdates {
             log('PriceUpdates.subscribe', `${conId}/${symbol} is successfully subscribed`);
         });
 
-        return conId;
+        return [conId, tickerIdToUse, symbol];
     }
 
     /**
-     * @returns The `conId` of the contract subscribed to, or `undefined` if there was a failure.
+     * @returns An array with the `conId` of the contract subscribed to, the `tickerId` assigned
+     * to the request, and the `symbol` of the contract,
+     * or `undefined` if there was a failure. Returned as `[conId, tickerId, symbol]`
      */
-    public async subscribe(args: ISubscribe): Promise<undefined | number> {
+    public async subscribe(args: ISubscribe): Promise<undefined | [number, number, string]> {
         return await this.innerSubscribe(args, false);
     }
 
     /**
-     * @returns The `conId` of the contract subscribed to, or `undefined` if there was a failure.
+     * @returns An array with the `conId` of the contract subscribed to, the `tickerId` assigned
+     * to the request, and the `symbol` of the contract,
+     * or `undefined` if there was a failure. Returned as `[conId, tickerId, symbol]`
      */
-    public async requestSnapshot(args: ISubscribe): Promise<undefined | number> {
+    public async requestSnapshot(args: ISubscribe): Promise<undefined | [number, number, string]> {
         return await this.innerSubscribe(args, true);
     }
 
