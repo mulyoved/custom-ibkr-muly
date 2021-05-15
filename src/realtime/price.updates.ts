@@ -10,7 +10,7 @@ import {
 import {IbkrEvents, IBKREVENTS, publishDataToTopic} from '../events';
 import {log, verbose} from '../log';
 import {getRadomReqId} from '../_utils/text.utils';
-import {PriceUpdatesEvent, TickPrice} from './price.interfaces';
+import {PriceUpdatesEvent, ReqPriceData, TickPrice} from './price.interfaces';
 
 const ibEvents = IbkrEvents.Instance;
 
@@ -23,12 +23,6 @@ interface SymbolWithTicker {
 
 interface ReqPriceUpdates {
     readonly tickType?: TickPrice | readonly TickPrice[];
-}
-
-interface ReqPriceData {
-    readonly conId: number;
-    readonly tickerId: number;
-    readonly symbol: string;
 }
 
 interface ISubscribe {

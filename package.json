@@ -1,7 +1,7 @@
 {
   "name": "custom-ibkr",
   "private": false,
-  "version": "1.8.15",
+  "version": "1.8.16",
   "description": "NodeJS Interactive Brokers wrapper & utilities - Custom Version",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

@@ -44,3 +44,9 @@ export interface PriceUpdatesEvent {
     readonly price: number | null;
     readonly date: Date;
 }
+
+export interface ReqPriceData {
+    readonly conId: number;
+    readonly tickerId: number;
+    readonly symbol: string;
+}
