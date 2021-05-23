@@ -45,7 +45,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/stoqey/ibkr.git"
+    "url": "git://github.com/jeanstkng/ibkr.git"
   },
   "keywords": [
     "interactive brokers",
@@ -65,7 +65,7 @@
   "bugs": {
     "url": "https://github.com/stoqey/ibkr/issues"
   },
-  "homepage": "https://github.com/stoqey/ibkr",
+  "homepage": "https://github.com/jeanstkng/ibkr",
   "devDependencies": {
     "@types/chai": "^4.2.11",
     "@types/debug": "^4.1.5",

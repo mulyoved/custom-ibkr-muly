@@ -250,7 +250,7 @@ describe('Condition Orders', () => {
                 symbol: "EWA",
                 currency: 'USD',
                 exchange: 'SMART',
-                comboLegs: await getAllContractDetails()
+                comboLegs: await getAllContractDetails(),
             }
 
             const conditions: OrderCondition[] = [new TimeCondition('20210530 15:00:00', true, ConjunctionConnection.AND)]; 
