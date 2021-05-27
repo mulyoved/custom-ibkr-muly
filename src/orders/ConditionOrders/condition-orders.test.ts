@@ -19,7 +19,7 @@ import TriggerMethod from './enum/trigger-method';
 import ConjunctionConnection from './enum/conjunction-connection';
 import { OptionType, OrderWithContract } from '../orders.interfaces';
 import OrderAction from './enum/order-action';
-import { TagValue, ComboLeg, OrderCondition } from '@stoqey/ib-updated';
+import { TagValue, ComboLeg, OrderCondition } from '@stoqey/ib';
 
 const ibkrEvents = IbkrEvents.Instance;
 const symbol = "A"
@@ -115,7 +115,7 @@ describe('Condition Orders', () => {
             secType: 'STK' // Provide a valid secType
         };
 
-        const contracts: ContractDetails[] = await getContractDetails(contractDetails); // Or query contracts and choose one, use as contracts[i].summary.conId
+        const contracts: ContractDetails[] = await getContractDetails(contractDetails); // Or query contracts and choose one, use as contracts[i].contract.conId
 
         for (const conts of contracts) {
             log('Contracts based on query are', JSON.stringify(conts));
@@ -146,17 +146,17 @@ describe('Condition Orders', () => {
                 secType: 'STK' // Provide a valid secType
             };
         
-            const contracts: ContractDetails[] = await getContractDetails(contractDetails); // Query contracts and choose one, use as contracts[i].summary.conId
+            const contracts: ContractDetails[] = await getContractDetails(contractDetails); // Query contracts and choose one, use as contracts[i].contract.conId
         
             log('Entered in callback');
 
              // Reference for parameters in conditions: https://interactivebrokers.github.io/tws-api/order_conditions.html
-            const priceCondition: PriceCondition = new PriceCondition(10, TriggerMethod.Default, contracts[0].summary.conId, "SMART", true, ConjunctionConnection.AND);
+            const priceCondition: PriceCondition = new PriceCondition(10, TriggerMethod.Default, contracts[0].contract.conId, "SMART", true, ConjunctionConnection.AND);
             const execCondition: ExecutionCondition = new ExecutionCondition("ISLAND", SecTypeCondition.STK, "FB", ConjunctionConnection.OR);
             const marginCondition: MarginCondition = new MarginCondition(10, true, ConjunctionConnection.OR);
-            const percentChangeCondition: PercentChangeCondition = new PercentChangeCondition(10, contracts[0].summary.conId, 'ISLAND', true, ConjunctionConnection.OR); // Exchange must be the same that the contract has
+            const percentChangeCondition: PercentChangeCondition = new PercentChangeCondition(10, contracts[0].contract.conId, 'ISLAND', true, ConjunctionConnection.OR); // Exchange must be the same that the contract has
             const timeCondition: TimeCondition = new TimeCondition("20210428 11:32:50", true, ConjunctionConnection.OR);
-            const volumeCondition: VolumeCondition = new VolumeCondition(500, contracts[0].summary.conId, "SMART", true, ConjunctionConnection.AND) // Volume in values of hundreds E.g.: 100, 200, 300...
+            const volumeCondition: VolumeCondition = new VolumeCondition(500, contracts[0].contract.conId, "SMART", true, ConjunctionConnection.AND) // Volume in values of hundreds E.g.: 100, 200, 300...
             
             order.conditions = [priceCondition, execCondition, marginCondition, percentChangeCondition, timeCondition, volumeCondition];
 
@@ -230,13 +230,13 @@ describe('Condition Orders', () => {
                 const cdetails2 = await getContractDetails(m_contract_object2)
             
                 const leg1: ComboLeg = {
-                    conId: cdetails1[0].summary.conId,
+                    conId: cdetails1[0].contract.conId,
                     ratio: 1,
                     action: "BUY",
                     exchange: 'SMART'
                 }
                 const leg2: ComboLeg = {
-                    conId: cdetails2[0].summary.conId,
+                    conId: cdetails2[0].contract.conId,
                     ratio: 1,
                     action: "SELL",
                     exchange: 'SMART',
@@ -250,7 +250,7 @@ describe('Condition Orders', () => {
                 symbol: "EWA",
                 currency: 'USD',
                 exchange: 'SMART',
-                comboLegs: await getAllContractDetails()
+                comboLegs: await getAllContractDetails(),
             }
 
             const conditions: OrderCondition[] = [new TimeCondition('20210530 15:00:00', true, ConjunctionConnection.AND)]; 

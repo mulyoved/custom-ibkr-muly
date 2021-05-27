@@ -1,3 +1,3 @@
-export {SecType as SecTypeCondition} from '@stoqey/ib-updated';
+export {SecType as SecTypeCondition} from '@stoqey/ib';
 
-export {Order, Contract} from '@stoqey/ib-updated';
+export {Order, Contract} from '@stoqey/ib';
