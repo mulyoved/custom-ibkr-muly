@@ -1,10 +1,8 @@
-import IB from '@stoqey/ib';
+import IB, {EventName} from '@stoqey/ib';
 import isEmpty from 'lodash/isEmpty';
 import findIndex from 'lodash/findIndex';
 import compact from 'lodash/compact';
 import {
-    ORDER,
-    OrderState,
     CreateSale,
     OrderWithContract,
     OrderStatus,
@@ -18,7 +16,7 @@ import {
     OrderFuture,
     OrderForex,
     OrderCombo,
-    ComboLeg,
+    GetOrderType,
 } from './orders.interfaces';
 
 import {publishDataToTopic, IbkrEvents, IBKREVENTS} from '../events';
@@ -104,7 +102,7 @@ export class Orders {
             const ib = IBKRConnection.Instance.getIBKR();
             self.ib = ib;
 
-            ib.on('openOrderEnd', () => {
+            ib.on(EventName.openOrderEnd, () => {
                 // Initialise OrderTrader
                 // OrderTrade.Instance.init();
                 publishDataToTopic({
@@ -114,7 +112,7 @@ export class Orders {
             });
 
             ib.on(
-                'orderStatus',
+                EventName.orderStatus,
                 (
                     id,
                     status,
@@ -130,7 +128,7 @@ export class Orders {
                     const currentOrder = self.openedOrders.find((oo) => oo.orderId === id);
 
                     const orderStatus: OrderStatus = {
-                        status,
+                        status: status as any,
                         filled,
                         remaining,
                         avgFillPrice,
@@ -138,7 +136,7 @@ export class Orders {
                         parentId,
                         lastFillPrice,
                         clientId,
-                        whyHeld,
+                        whyHeld: whyHeld as any,
                     };
 
                     publishDataToTopic({
@@ -162,7 +160,7 @@ export class Orders {
                 }
             );
 
-            ib.on('openOrder', (orderId, contract, order: ORDER, orderState: OrderState) => {
+            ib.on(EventName.openOrder, (orderId, contract, order, orderState) => {
                 // 1. Update OpenOrders
                 // Orders that need to be filled
                 // -----------------------------------------------------------------------------------
@@ -232,11 +230,11 @@ export class Orders {
                     // update this symbolTickerOrder
                     self.tickersAndOrders = self.tickersAndOrders.map((i) => {
                         if (i.tickerId === orderId) {
-                            const updatedSymbolTickerX = {
+                            const updatedSymbolTickerX: SymbolTickerOrder = {
                                 ...i,
                                 orderPermId: order.permId,
                                 symbol: thisOrderTicker.symbol,
-                                orderStatus: orderState.status, // update order state
+                                orderStatus: orderState.status as any, // update order state
                             };
                             updatedSymbolTicker = updatedSymbolTickerX;
                             return updatedSymbolTickerX;
@@ -319,8 +317,8 @@ export class Orders {
             // listen for account summary
             const handleOpenOrders = (ordersData) => {
                 if (!done) {
-                    self.ib.off('openOrder', handleOpenOrders);
-                    self.ib.off('openOrderEnd', openOrderEnd);
+                    self.ib.off(EventName.openOrder, handleOpenOrders);
+                    self.ib.off(EventName.openOrderEnd, openOrderEnd);
                     done = true;
 
                     // update  openedOrders
@@ -334,28 +332,23 @@ export class Orders {
                 handleOpenOrders(openedOrders);
             };
 
-            self.ib.once('openOrderEnd', openOrderEnd);
+            self.ib.once(EventName.openOrderEnd, openOrderEnd);
 
-            self.ib.on(
-                'openOrder',
-                function (orderId, contract, order: ORDER, orderState: OrderState) {
-                    // Only check pending orders
-                    if (
-                        ['PendingSubmit', 'PreSubmitted', 'Submitted'].includes(orderState.status)
-                    ) {
-                        openedOrders.push({
-                            // OrderId + orderState
-                            orderId,
-                            orderState,
+            self.ib.on(EventName.openOrder, function (orderId, contract, order, orderState) {
+                // Only check pending orders
+                if (['PendingSubmit', 'PreSubmitted', 'Submitted'].includes(orderState.status)) {
+                    openedOrders.push({
+                        // OrderId + orderState
+                        orderId,
+                        orderState,
 
-                            // Add order
-                            ...order,
-                            // Add contract
-                            ...contract,
-                        });
-                    }
+                        // Add order
+                        ...order,
+                        // Add contract
+                        ...contract,
+                    });
                 }
-            );
+            });
 
             self.ib.reqAllOpenOrders(); // refresh orders
 
@@ -389,14 +382,14 @@ export class Orders {
         const shouldBeUniqueOrder = (options && options.unique) || false;
 
         const success = (): boolean => {
-            ib.off('nextValidId', handleOrderIdNext);
+            ib.off(EventName.nextValidId, handleOrderIdNext);
             self.processing = false; // reset processing
             return true;
         };
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const erroredOut = (error?: Error): boolean => {
-            ib.off('nextValidId', handleOrderIdNext);
+            ib.off(EventName.nextValidId, handleOrderIdNext);
             self.processing = false; // reset processing
             return false;
         };
@@ -501,7 +494,8 @@ export class Orders {
             const {symbol, size} = contractOrder;
 
             // eslint-disable-next-line @typescript-eslint/ban-types
-            const orderCommand: Function = ib.order[contractOrder.type];
+            const StockOrderType = GetOrderType(contractOrder.type);
+            const orderCommand: any = StockOrderType;
 
             const args = contractOrder.parameters;
 
@@ -528,72 +522,78 @@ export class Orders {
                 contractOrderRequest: contractOrder, // for reference when closing trade,
             };
 
-            type stock = ReturnType<typeof ib.contract.stock>;
-            type cfd = ReturnType<typeof ib.contract.cfd>;
-            type combo = ReturnType<typeof ib.contract.combo>;
-            type forex = ReturnType<typeof ib.contract.forex>;
-            type ind = ReturnType<typeof ib.contract.ind>;
-            type future = ReturnType<typeof ib.contract.future>;
-            type option = ReturnType<typeof ib.contract.option>;
-            type fop = ReturnType<typeof ib.contract.fop>;
-
-            type comboWithLegs = combo & {comboLegs: ComboLeg[]};
-
-            type ValidTypes = stock | cfd | comboWithLegs | forex | ind | future | option | fop;
-
-            const dict: ContractDictionary<ValidTypes> = {
-                [ContractEnum.STOCK]: ib.contract.stock(contractOrder.symbol),
-                [ContractEnum.CFD]: ib.contract.cfd(contractOrder.symbol),
+            const dict: ContractDictionary<any> = {
+                [ContractEnum.STOCK]: {
+                    secType: 'STK',
+                    symbol: contractOrder.symbol,
+                    exchange: contractOrder.exchange ?? 'SMART',
+                    currency: contractOrder.currency ?? 'USD',
+                },
+                [ContractEnum.CFD]: {
+                    secType: 'CFD',
+                    symbol: contractOrder.symbol,
+                    exchange: contractOrder.exchange ?? 'SMART',
+                    currency: contractOrder.currency ?? 'USD',
+                },
                 [ContractEnum.COMBO]: {
-                    ...ib.contract.combo(
-                        contractOrder.symbol,
-                        (contractOrder as OrderCombo).currency,
-                        (contractOrder as OrderCombo).exchange
-                    ),
+                    secType: 'BAG',
+                    symbol: contractOrder.symbol,
+                    exchange: contractOrder.exchange ?? 'SMART',
+                    currency: contractOrder.currency ?? 'USD',
                     comboLegs: (contractOrder as OrderCombo).comboLegs,
                 },
-                [ContractEnum.IND]: ib.contract.ind(contractOrder.symbol),
-                [ContractEnum.FOREX]: ib.contract.forex(
-                    contractOrder.symbol,
-                    (contractOrder as OrderForex).currency
-                ),
-                [ContractEnum.FUTURE]: ib.contract.future(
-                    contractOrder.symbol,
-                    (contractOrder as OrderFuture).expiry,
-                    (contractOrder as OrderFuture).currency,
-                    (contractOrder as OrderFuture).exchange,
-                    (contractOrder as OrderFuture).multiplier
-                ),
-                [ContractEnum.OPTION]: ib.contract.option(
-                    contractOrder.symbol,
-                    (contractOrder as OrderOption).expiry,
-                    (contractOrder as OrderOption).strike,
-                    (contractOrder as OrderOption).right,
-                    (contractOrder as OrderOption).exchange,
-                    (contractOrder as OrderOption).currency
-                ),
-                [ContractEnum.FOP]: ib.contract.fop(
-                    contractOrder.symbol,
-                    (contractOrder as OrderFop).expiry,
-                    (contractOrder as OrderFop).strike,
-                    (contractOrder as OrderFop).right,
-                    (contractOrder as OrderFop).multiplier,
-                    (contractOrder as OrderFop).exchange,
-                    (contractOrder as OrderFop).currency
-                ),
+                [ContractEnum.IND]: {
+                    secType: 'IND',
+                    symbol: contractOrder.symbol,
+                    exchange: contractOrder.exchange ?? 'SMART',
+                    currency: contractOrder.currency ?? 'USD',
+                },
+                [ContractEnum.FOREX]: {
+                    secType: 'CASH',
+                    symbol: contractOrder.symbol,
+                    exchange: contractOrder.exchange ?? 'SMART',
+                    currency: contractOrder.currency ?? 'USD',
+                },
+                [ContractEnum.FUTURE]: {
+                    secType: 'FUT',
+                    symbol: contractOrder.symbol,
+                    exchange: contractOrder.exchange ?? 'SMART',
+                    currency: contractOrder.currency ?? 'USD',
+                    lastTradeDateOrContractMonth: (contractOrder as OrderFuture).expiry,
+                    multiplier: (contractOrder as OrderFuture).multiplier,
+                },
+                [ContractEnum.OPTION]: {
+                    secType: 'OPT',
+                    symbol: contractOrder.symbol,
+                    exchange: contractOrder.exchange ?? 'SMART',
+                    currency: contractOrder.currency ?? 'USD',
+                    lastTradeDateOrContractMonth: (contractOrder as OrderFuture).expiry,
+                    right: (contractOrder as OrderOption).right,
+                    strike: (contractOrder as OrderOption).strike,
+                },
+                [ContractEnum.FOP]: {
+                    secType: 'FOP',
+                    symbol: contractOrder.symbol,
+                    exchange: contractOrder.exchange ?? 'SMART',
+                    currency: contractOrder.currency ?? 'USD',
+                    lastTradeDateOrContractMonth: (contractOrder as OrderFuture).expiry,
+                    right: (contractOrder as OrderOption).right,
+                    strike: (contractOrder as OrderOption).strike,
+                    multiplier: (contractOrder as OrderFop).multiplier,
+                },
             };
 
             // Place order
             if (contractOrder.secType === 'BAG') {
                 ib.placeOrder(tickerToUse, dict[contractType], {
-                    ...orderCommand(contractOrder.action, ...args),
+                    ...new orderCommand(contractOrder.action, ...args),
                     smartComboRoutingParams: contractOrder.smartComboRoutingParams,
                 });
             } else {
                 ib.placeOrder(
                     tickerToUse,
                     dict[contractType],
-                    orderCommand(contractOrder.action, ...args)
+                    new orderCommand(contractOrder.action, ...args)
                 );
             }
 
@@ -667,7 +667,7 @@ export class Orders {
                 // Start -----------------------------
                 self.processing = true;
 
-                ib.on('nextValidId', handleOrderIdNext); // start envs
+                ib.on(EventName.nextValidId, handleOrderIdNext); // start envs
                 return placingOrderNow();
             }
         }

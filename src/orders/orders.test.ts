@@ -13,7 +13,7 @@ const ibkrEvents = IbkrEvents.Instance;
 const symbolZ = 'EUR';
 const symbolX = 'FB';
 const symbolXcfd = 'NFLX';
-const symbolXind = 'SET';
+const symbolXind = 'NDX';
 const symbolY = 'ACHC'; // portfolio
 const symbolOpt = "GOOG";
 const symbolFut = "L";
@@ -28,7 +28,8 @@ const forexOrderBuyInZ: OrderForex = {
     size: 3,
     capital: 1000,
     exitTrade: false,
-    currency: "USD"
+    currency: "USD",
+    exchange: 'IDEALPRO'
 };
 
 const stockOrderBuyInY: OrderStock = {
@@ -62,8 +63,8 @@ const optionOrderBuyInM: OrderOption = {
     size: 3,
     capital: 1000,
     exitTrade: false,
-    expiry: "20210401",
-    strike: "2055",
+    expiry: "20210820",
+    strike: "2380",
     right: OptionType.Put
 };
 
@@ -96,13 +97,13 @@ async function getAllContractDetails(): Promise<ComboLeg[]> {
     const cdetails2 = await getContractDetails(m_contract_object2)
 
     const leg1: ComboLeg = {
-        conId: cdetails1[0].summary.conId,
+        conId: cdetails1[0].contract.conId,
         ratio: 1,
         action: "BUY",
         exchange: 'SMART'
     }
     const leg2: ComboLeg = {
-        conId: cdetails2[0].summary.conId,
+        conId: cdetails2[0].contract.conId,
         ratio: 1,
         action: "SELL",
         exchange: 'SMART',
@@ -130,8 +131,7 @@ const futureOrderBuyInX: OrderFuture = {
     parameters: orderParams, // 'SELL', 1, 9999,
     size: 3,
     capital: 1000,
-    exitTrade: false,
-    expiry: "202106",
+    expiry: "20210721",
     currency: "GBP",
     exchange: "ICEEU",
     multiplier: 1250

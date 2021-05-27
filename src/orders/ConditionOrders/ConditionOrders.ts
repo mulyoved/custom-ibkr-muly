@@ -1,4 +1,4 @@
-import {IBApi, EventName, ErrorCode, Contract, Order, OrderAction} from '@stoqey/ib-updated';
+import {IBApi, EventName, ErrorCode, Contract, Order, OrderAction} from '@stoqey/ib';
 import {IB_HOST, IB_PORT} from '../../config';
 import {IBKREVENTS} from '../../events';
 import {IbkrEvents} from '../../events/IbkrEvents';

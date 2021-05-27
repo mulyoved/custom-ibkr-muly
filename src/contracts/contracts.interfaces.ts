@@ -20,7 +20,7 @@ export interface ContractSummary extends ContractObject {
 }
 
 export interface ContractDetails {
-    summary: ContractSummary;
+    contract: ContractSummary;
     marketName: string;
     minTick: number;
     orderTypes: string;

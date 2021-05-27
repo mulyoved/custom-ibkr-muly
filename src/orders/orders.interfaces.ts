@@ -1,7 +1,18 @@
-import {ComboLeg, TagValue} from '@stoqey/ib-updated';
-import {ContractObject} from '../contracts';
+import {
+    OrderState,
+    Order,
+    Contract,
+    LimitOrder,
+    MarketOrder,
+    MarketCloseOrder,
+    StopOrder,
+    StopLimitOrder,
+    TrailingStopOrder,
+    ComboLeg,
+    TagValue,
+} from '@stoqey/ib';
 
-export {ComboLeg, TagValue} from '@stoqey/ib-updated';
+export {ComboLeg, TagValue} from '@stoqey/ib';
 
 export type action = 'BUY' | 'SELL';
 
@@ -105,7 +116,7 @@ export interface ORDER {
     whatIf: boolean;
 }
 
-export interface OrderWithContract extends ORDER, ContractObject {
+export interface OrderWithContract extends Order, Contract {
     orderId: number;
     orderState: OrderState;
 }
@@ -122,17 +133,17 @@ export interface OrderStatus {
     whyHeld: number;
 }
 
-export interface OrderState {
-    status: OrderStatusType;
-    initMargin: string;
-    maintMargin: string;
-    equityWithLoan: string;
-    commission: number;
-    minCommission: number;
-    maxCommission: number;
-    commissionCurrency: string;
-    warningText: string;
-}
+// export interface OrderState {
+//     status: OrderStatusType;
+//     initMargin: string;
+//     maintMargin: string;
+//     equityWithLoan: string;
+//     commission: number;
+//     minCommission: number;
+//     maxCommission: number;
+//     commissionCurrency: string;
+//     warningText: string;
+// }
 
 // ORDER TRADE
 export type OrderAction = 'BUY' | 'SELL';
@@ -145,6 +156,32 @@ export type OrderType =
     | 'stopLimit' // .order.stopLimit(action, quantity, limitPrice, stopPrice, transmitOrder, parentId, tif)
     | 'trailingStop'; // .order.trailingStop(action, quantity, auxPrice, tif, transmitOrder, parentId)
 
+export const GetOrderType = (
+    orderType: OrderType
+):
+    | typeof LimitOrder
+    | typeof MarketCloseOrder
+    | typeof StopOrder
+    | typeof StopLimitOrder
+    | typeof TrailingStopOrder
+    | typeof MarketOrder => {
+    switch (orderType) {
+        case 'limit':
+            return LimitOrder;
+        case 'marketClose':
+            return MarketCloseOrder;
+        case 'stop':
+            return StopOrder;
+        case 'stopLimit':
+            return StopLimitOrder;
+        case 'trailingStop':
+            return TrailingStopOrder;
+
+        default:
+        case 'market':
+            return MarketOrder;
+    }
+};
 interface OrderBase {
     symbol: string;
     action: OrderAction;
@@ -163,12 +200,16 @@ interface OrderBase {
         exitTime: Date;
         exitPrice: number;
     };
+    exchange?: string;
+    currency?: string;
 }
 
 interface OrderOptBase extends OrderBase {
     strike: string;
     right: OptionType;
     expiry: string; // "20210423"
+    exchange?: string;
+    currency?: string;
 }
 
 export interface OrderStock extends OrderBase {
@@ -241,8 +282,6 @@ export interface OrderCombo extends OrderBase {
      * Value = The upper price
      */
     smartComboRoutingParams: TagValue[];
-    currency?: string;
-    exchange?: string;
 }
 
 export interface OrderInd extends OrderBase {
@@ -264,15 +303,11 @@ export interface OrderFuture extends OrderBase {
 
 export interface OrderOption extends OrderOptBase {
     secType: 'OPT';
-    currency?: string;
-    exchange?: string;
 }
 
 export interface OrderFop extends OrderOptBase {
     secType: 'FOP';
     multiplier?: number;
-    exchange?: string;
-    currency?: string;
 }
 
 export type OrderGeneral =

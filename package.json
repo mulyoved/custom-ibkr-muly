@@ -11,7 +11,6 @@
     "LICENSE"
   ],
   "scripts": {
-    "prepare": "npm run build",
     "lint": "tslint \"src/**/*.ts\" --project tsconfig.json",
     "build": "rimraf dist && tsc",
     "dev": "nodemon src/dev",
@@ -99,8 +98,7 @@
     "typescript": ">=2.0"
   },
   "dependencies": {
-    "@stoqey/ib": "^0.1.1",
-    "@stoqey/ib-updated": "npm:@stoqey/ib@1.1.31",
+    "@stoqey/ib": "^1.1.42",
     "debug": "^4.1.1",
     "dotenv": "^8.2.0",
     "lodash": "^4.17.20",
