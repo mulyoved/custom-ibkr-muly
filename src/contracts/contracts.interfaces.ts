@@ -13,6 +13,7 @@ export interface ContractObject {
     localSymbol?: string;
     tradingClass?: string;
     comboLegsDescrip?: string;
+    lastTradeDateOrContractMonth?: string;
 }
 
 export interface ContractSummary extends ContractObject {
@@ -37,4 +38,5 @@ export interface ContractDetails {
     liquidHours: string;
     evRule: string;
     evMultiplier?: any;
+    lastTradeDateOrContractMonth?: string;
 }
