@@ -9,6 +9,7 @@ export interface ContractDetailsParams {
     readonly symbol?: string;
     readonly secType?: SecType | string;
     readonly expiry?: string;
+    readonly lastTradeDateOrContractMonth?: string;
     readonly strike?: number;
     readonly right?: string;
     readonly multiplier?: number;
@@ -37,6 +38,7 @@ export function convertContractToContractDetailsParams(
         symbol: contract.symbol,
         secType: contract.secType,
         expiry: contract.expiry,
+        lastTradeDateOrContractMonth: contract.lastTradeDateOrContractMonth,
         strike: contract.strike,
         right: contract.right,
         multiplier: contract.multiplier,
