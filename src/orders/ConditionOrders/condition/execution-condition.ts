@@ -1,4 +1,4 @@
-import {SecTypeCondition} from '../condition-order.interfaces';
+import {SecType} from '../../orders.interfaces';
 import {ConjunctionConnection} from '../enum/conjunction-connection';
 import {OrderConditionType} from '../enum/order-condition-type';
 import OrderCondition from './order-condition';
@@ -22,7 +22,7 @@ export class ExecutionCondition implements OrderCondition {
      */
     constructor(
         public exchange: string,
-        public secType: SecTypeCondition,
+        public secType: SecType,
         public symbol: string,
         public conjunctionConnection: ConjunctionConnection
     ) {}

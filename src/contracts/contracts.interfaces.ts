@@ -1,4 +1,4 @@
-export type SecType = 'CASH' | 'FUT' | 'NEWS' | 'OPT' | 'STK';
+import {SecType} from '../orders/index';
 
 export interface ContractObject {
     conId: number;

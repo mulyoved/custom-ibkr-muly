@@ -1,82 +1,147 @@
 import 'mocha';
 import {expect} from 'chai';
 import {Orders} from './Orders';
-import { OrderWithContract, OrderStatus, OrderForex, OrderStock, OrderOption, OrderCfd, OrderCombo, OrderInd, OrderFuture, OrderFop, ComboLeg, TagValue } from './orders.interfaces';
+import {
+    OrderWithContract,
+    OrderStatus,
+    ComboLeg,
+    TagValue,
+    Order,
+    Contract,
+    SecType,
+} from './orders.interfaces';
 import {IbkrEvents, IBKREVENTS} from '../events';
 import ibkr from '..';
 import {log} from '../log';
-import { OptionType } from '.';
-import { ContractDetailsParams, getContractDetails } from '../contracts';
+import {OptionType} from '.';
+import {ContractDetailsParams, getContractDetails} from '../contracts';
+import OrderAction from './ConditionOrders/enum/order-action';
+import OrderType from './ConditionOrders/enum/orderType';
 
 const ibkrEvents = IbkrEvents.Instance;
 
 const symbolZ = 'EUR';
-const symbolX = 'FB';
-const symbolXcfd = 'NFLX';
-const symbolXind = 'NDX';
 const symbolY = 'ACHC'; // portfolio
-const symbolOpt = "GOOG";
-const symbolFut = "L";
-const orderParams = [1];
+const symbolX = 'FB';
+const symbolOpt = 'GOOG';
+const symbolXcfd = 'NFLX';
+const symbolXind = 'DAX';
+const symbolFut = 'L';
 
-const forexOrderBuyInZ: OrderForex = {
-    secType: "CASH",
+// CASH | FOREX
+const forexOrderBuyInZ: Order = {
+    action: OrderAction.BUY,
+    orderType: OrderType.MKT,
+    totalQuantity: 3,
+};
+
+const forexContractBuyInZ: Contract = {
     symbol: symbolZ,
-    action: 'BUY',
-    type: 'market',
-    parameters: orderParams, // 'SELL', 1, 9999,
-    size: 3,
-    capital: 1000,
-    exitTrade: false,
-    currency: "USD",
-    exchange: 'IDEALPRO'
+    secType: SecType.CASH,
+    currency: 'USD',
+    exchange: 'IDEALPRO',
 };
 
-const stockOrderBuyInY: OrderStock = {
-    secType: "STK",
+// STK | STOCK
+const stockOrderBuyInY: Order = {
+    action: OrderAction.BUY,
+    orderType: OrderType.MKT,
+    totalQuantity: 3,
+};
+
+const stockContractBuyInY: Contract = {
+    secType: SecType.STK,
     symbol: symbolY, // portfolio
-    action: 'BUY',
-    type: 'market',
-    parameters: orderParams, // 'SELL', 1, 9999,
-    size: 3,
-    capital: 1000,
-    exitTrade: false,
+    exchange: 'SMART',
 };
 
-const stockOrderBuyInX: OrderStock = {
-    secType: "STK",
+const stockOrderBuyInX: Order = {
+    action: OrderAction.BUY,
+    orderType: OrderType.MKT,
+    totalQuantity: 3,
+};
+
+const stockContractBuyInX: Contract = {
+    secType: SecType.STK,
     symbol: symbolX,
-    action: 'BUY',
-    type: 'market',
-    parameters: orderParams, // 'SELL', 1, 9999,
-    size: 3,
-    capital: 1000,
-    exitTrade: false,
+    exchange: 'SMART',
 };
 
-const optionOrderBuyInM: OrderOption = {
-    secType: "OPT",
+// OPT | OPTIONS
+const optionOrderBuy: Order = {
+    action: OrderAction.BUY,
+    orderType: OrderType.MKT,
+    totalQuantity: 3,
+};
+
+const optionContractBuy: Contract = {
+    secType: SecType.OPT,
     symbol: symbolOpt,
-    action: 'BUY',
-    type: 'market',
-    parameters: orderParams, // 'SELL', 1, 9999,
-    size: 3,
-    capital: 1000,
-    exitTrade: false,
-    expiry: "20210820",
-    strike: "2380",
-    right: OptionType.Put
+    lastTradeDateOrContractMonth: '20210820',
+    strike: 2380,
+    right: OptionType.Put,
+    exchange: 'SMART',
 };
 
-const cfdOrderBuyInX: OrderCfd = {
-    secType: "CFD",
+// CFD
+const cfdOrderBuyInX: Order = {
+    action: OrderAction.BUY,
+    orderType: OrderType.MKT,
+    totalQuantity: 3,
+};
+
+const cfdContractBuyInX: Contract = {
+    secType: SecType.CFD,
     symbol: symbolXcfd,
-    action: 'BUY',
-    type: 'market',
-    parameters: orderParams, // 'SELL', 1, 9999,
-    size: 3,
-    capital: 1000,
-    exitTrade: false,
+    exchange: 'SMART',
+};
+
+// IND | INDEX
+const indOrderBuyInX: Order = {
+    action: OrderAction.BUY,
+    orderType: OrderType.MKT,
+    totalQuantity: 3,
+};
+
+const indContractBuyInX: Contract = {
+    secType: SecType.IND,
+    symbol: symbolXind,
+    exchange: 'DTB',
+    currency: 'EUR',
+};
+
+// FUT | FUTURE
+const futureOrderBuyInX: Order = {
+    action: OrderAction.BUY,
+    orderType: OrderType.MKT,
+    totalQuantity: 3,
+};
+
+const futureContractBuyInX: Contract = {
+    secType: SecType.FUT,
+    symbol: symbolFut,
+    lastTradeDateOrContractMonth: '20210721',
+    currency: 'GBP',
+    exchange: 'ICEEU',
+    multiplier: 1250,
+};
+
+// FOP | Future Options
+const fopOrderBuy: Order = {
+    action: OrderAction.BUY,
+    orderType: OrderType.MKT,
+    totalQuantity: 1,
+};
+
+const fopContractBuy: Contract = {
+    secType: SecType.FOP,
+    symbol: symbolFut,
+    lastTradeDateOrContractMonth: '20220615',
+    strike: 99,
+    right: OptionType.Call,
+    currency: 'GBP',
+    exchange: 'ICEEU',
+    multiplier: 1250,
 };
 
 async function getAllContractDetails(): Promise<ComboLeg[]> {
@@ -84,75 +149,33 @@ async function getAllContractDetails(): Promise<ComboLeg[]> {
         secType: 'STK',
         symbol: 'EWA',
         currency: 'USD',
-        exchange: 'SMART'
+        exchange: 'SMART',
     };
-    
+
     let m_contract_object2: ContractDetailsParams = {
         secType: 'STK',
         symbol: 'EWC',
         currency: 'USD',
-        exchange: 'SMART'
+        exchange: 'SMART',
     };
-    const cdetails1 = await getContractDetails(m_contract_object1)
-    const cdetails2 = await getContractDetails(m_contract_object2)
+    const cdetails1 = await getContractDetails(m_contract_object1);
+    const cdetails2 = await getContractDetails(m_contract_object2);
 
     const leg1: ComboLeg = {
         conId: cdetails1[0].contract.conId,
         ratio: 1,
-        action: "BUY",
-        exchange: 'SMART'
-    }
+        action: 'BUY',
+        exchange: 'SMART',
+    };
     const leg2: ComboLeg = {
         conId: cdetails2[0].contract.conId,
         ratio: 1,
-        action: "SELL",
+        action: 'SELL',
         exchange: 'SMART',
-    }
+    };
 
     return [leg1, leg2];
 }
-
-const indOrderBuyInX: OrderInd = {
-    secType: "IND",
-    symbol: symbolXind,
-    action: 'BUY',
-    type: 'market',
-    parameters: orderParams, // 'SELL', 1, 9999,
-    size: 3,
-    capital: 10000,
-    exitTrade: false,
-};
-
-const futureOrderBuyInX: OrderFuture = {
-    secType: "FUT",
-    symbol: symbolFut,
-    action: 'BUY',
-    type: 'market',
-    parameters: orderParams, // 'SELL', 1, 9999,
-    size: 3,
-    capital: 1000,
-    expiry: "20210721",
-    currency: "GBP",
-    exchange: "ICEEU",
-    multiplier: 1250
-};
-
-const fopOrderBuyInM: OrderFop = {
-    secType: "FOP",
-    symbol: symbolFut,
-    action: 'BUY',
-    type: 'market',
-    parameters: orderParams, // 'SELL', 1, 9999,
-    size: 1,
-    capital: 1000,
-    exitTrade: false,
-    expiry: "20220615",
-    strike: "99",
-    right: OptionType.Call,
-    currency: "GBP",
-    exchange: "ICEEU",
-    multiplier: 1250
-};
 
 function delay(t: number): Promise<any> {
     return new Promise(function (resolve) {
@@ -181,12 +204,11 @@ describe('Orders', () => {
         for (const res of results) {
             OrdersManager.cancelOrder(res.orderId);
             await delay(1000);
-        };
+        }
         expect(results).to.be.not.null;
     });
 
     it('Place Order', (done) => {
-
         let completed = false;
         const orderTrade = Orders.Instance;
 
@@ -194,7 +216,7 @@ describe('Orders', () => {
             const handleData = (data) => {
                 ibkrEvents.off(IBKREVENTS.ORDER_FILLED, handleData);
                 if (!completed) {
-                    done()
+                    done();
                     completed = true;
                 }
             };
@@ -218,40 +240,43 @@ describe('Orders', () => {
 
             const delayTime = 1000;
 
-            const opt = { unique: true };
+            const opt = {unique: true};
 
-            const tagValue: TagValue = { tag: 'NonGuaranteed', value: '1' };
-            const comboOrderBuyInX: OrderCombo = {
-                secType: "BAG",
-                symbol: "EWA",
-                action: 'BUY',
-                type: 'market',
-                parameters: [1, '110'], // 'SELL', 1, 9999,
-                size: 1,
+            // BAG | COMBO | SPREAD
+            const tagValue: TagValue = {tag: 'NonGuaranteed', value: '1'};
+            const comboOrderBuyInX: Order = {
+                action: OrderAction.BUY,
+                orderType: OrderType.MKT,
+                totalQuantity: 1,
+                smartComboRoutingParams: [tagValue],
+            };
+
+            const comboContractBuyInX: Contract = {
+                secType: SecType.BAG,
+                symbol: 'EWA',
                 currency: 'USD',
                 exchange: 'SMART',
                 comboLegs: await getAllContractDetails(),
-                smartComboRoutingParams: [tagValue]
             };
 
             const orders = [
-                async () => orderTrade.placeOrder(stockOrderBuyInX, "STK", opt),
+                async () => orderTrade.placeOrder(stockContractBuyInX, stockOrderBuyInX, opt),
                 async () => delay(delayTime),
-                async () => orderTrade.placeOrder(stockOrderBuyInY, "STK", opt), // portfolio
+                async () => orderTrade.placeOrder(stockContractBuyInY, stockOrderBuyInY, opt), // portfolio
                 async () => delay(delayTime),
-                async () => orderTrade.placeOrder(forexOrderBuyInZ, "CASH", opt),
+                async () => orderTrade.placeOrder(forexContractBuyInZ, forexOrderBuyInZ, opt),
                 async () => delay(delayTime),
-                async () => orderTrade.placeOrder(cfdOrderBuyInX, "CFD", opt),
+                async () => orderTrade.placeOrder(cfdContractBuyInX, cfdOrderBuyInX, opt),
                 async () => delay(delayTime),
-                async () => orderTrade.placeOrder(indOrderBuyInX, "IND", opt),
+                async () => orderTrade.placeOrder(indContractBuyInX, indOrderBuyInX, opt),
                 async () => delay(delayTime),
-                async () => orderTrade.placeOrder(futureOrderBuyInX, "FUT", opt),
+                async () => orderTrade.placeOrder(futureContractBuyInX, futureOrderBuyInX, opt),
                 async () => delay(delayTime),
-                async () => orderTrade.placeOrder(optionOrderBuyInM, "OPT", opt),
+                async () => orderTrade.placeOrder(optionContractBuy, optionOrderBuy, opt),
                 async () => delay(delayTime),
-                async () => orderTrade.placeOrder(fopOrderBuyInM, "FOP", opt),
+                async () => orderTrade.placeOrder(fopContractBuy, fopOrderBuy, opt),
                 async () => delay(delayTime),
-                async () => orderTrade.placeOrder(comboOrderBuyInX, "BAG", opt),
+                async () => orderTrade.placeOrder(comboContractBuyInX, comboOrderBuyInX, opt),
                 async () => delay(delayTime),
             ];
 
@@ -261,6 +286,5 @@ describe('Orders', () => {
         };
 
         getPlacedOrder();
-
     });
 });

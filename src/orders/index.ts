@@ -1,6 +1,5 @@
 export * from './Orders';
 export * from './orders.interfaces';
-export * from './ConditionOrders/condition-order.interfaces';
 export * from './ConditionOrders/ConditionOrders';
 export * from './ConditionOrders/condition/contract-condition';
 export * from './ConditionOrders/condition/execution-condition';
@@ -12,7 +11,7 @@ export * from './ConditionOrders/condition/price-condition';
 export * from './ConditionOrders/condition/time-condition';
 export * from './ConditionOrders/condition/volume-condition';
 export * from './ConditionOrders/enum/conjunction-connection';
-export * as OrderActionCondition from './ConditionOrders/enum/order-action';
+export * from './ConditionOrders/enum/order-action';
 export * from './ConditionOrders/enum/order-condition-type';
-export * as OrderTypeCondition from './ConditionOrders/enum/orderType';
+export * from './ConditionOrders/enum/orderType';
 export * from './ConditionOrders/enum/trigger-method';

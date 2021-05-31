@@ -1,8 +1,9 @@
-import {ContractDetails, ContractSummary, SecType} from './contracts.interfaces';
+import {ContractDetails, ContractSummary} from './contracts.interfaces';
 import {getRadomReqId} from '../_utils/text.utils';
 import IBKRConnection from '../connection/IBKRConnection';
 import {handleEventfulError} from '../events/HandleError';
 import {EventName} from '@stoqey/ib';
+import {SecType} from '../orders/index';
 
 export interface ContractDetailsParams {
     readonly conId?: number;

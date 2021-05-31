@@ -2,7 +2,7 @@ import {EventName} from '@stoqey/ib';
 import {IBKRConnection} from '../connection';
 import {log} from '../log';
 import {getRadomReqId} from '../_utils/text.utils';
-import {SecType} from './contracts.interfaces';
+import {SecType} from '../orders/index';
 
 export interface SecDefOptContractParams {
     readonly conId: number;

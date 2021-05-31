@@ -25,7 +25,7 @@ This is an event-based ibkr client for node
 | :---: | --------------------------------------------- |
 |   ✅   | Accounts                                      |
 |   ✅   | Portfolios                                    |
-|   ✅   | Orders                                        |
+|   ✅   | Orders (stocks/forex/options/index .e.t.c)    |
 |   ✅   | Historical Data                               |
 |   ✅   | Realtime price updates                        |
 |   ✅   | Contracts (stocks/forex/options/index .e.t.c) |
@@ -172,33 +172,41 @@ const contractDetails = await getContractDetails({
 
 ### Orders
 ```ts
-import { Orders, OrderStock } from 'custom-ibkr';
+import { Orders, Order, Contract } from 'custom-ibkr';
 
 const orderTrade = Orders.Instance;
 
-const myStockOrder: OrderStock = { ... }
+const myStockOrder: Order = { ... }
+const myStockContract: Contract = { ... }
 
-const placedOrder = await orderTrade.placeOrder(myStockOrder, 'STK');
+const placedOrder = await orderTrade.placeOrder(myStockContract, myStockOrder);
           
 ```
 
-**OrderStock** 
+**Order** 
 ```ts
-const stockOrderBuyOut: OrderStock = {
+const stockOrderBuyOut: Order = {
+    action: OrderAction.BUY,
+    orderType: OrderType.LMT,
+    lmtPrice: 200
+    totalQuantity: 5
+}
+
+const stockContractBuyOut: Contract = {
     symbol: symbol,
-    action: "SELL",
-    type: "limit",
-    parameters: ["1", "9999"], // 'SELL', 1, 9999,
+    secType: SecType.STK,
+    exchange: exchange, // 'SMART'
+    currency: currency // 'USD'
 }
 ```
 
 **type**
-- limit `('SELL', 1, 9999)` like in example above
-- market `(action, quantity, transmitOrder, goodAfterTime, goodTillDate)`
-- marketClose `(action, quantity, price, transmitOrder)`
-- stop `(action, quantity, price, transmitOrder, parentId, tif)`
- - stopLimit `(action, quantity, limitPrice, stopPrice, transmitOrder, parentId, tif)`
-- trailingStop `(action, quantity, auxPrice, tif, transmitOrder, parentId)`
+- limit -> LMT `(action, quantity, lmtPrice)` like in example above
+- market -> MKT `(action, quantity, transmitOrder, goodAfterTime, goodTillDate)`
+- marketClose -> MOC `(action, quantity, price, transmitOrder)`
+- stop -> STP `(action, quantity, price, transmitOrder, parentId, tif)`
+- stopLimit -> STP_LMT `(action, quantity, limitPrice, stopPrice, transmitOrder, parentId, tif)`
+- trailingStop -> TRAIL `(action, quantity, auxPrice, tif, transmitOrder, parentId)`
 
 **Order events**
 
@@ -248,5 +256,5 @@ Run with `DEBUG=ibkr:*` to see all logs, or `DEBUG=ibkr:info` for less verbose l
 
 <div align="center" >
 <img style="background:#231f20;color:white; width:100%;padding:10px" src="./docs/logo_interactive-brokers_white.png"></img>
-<h3>Stoqey Inc<h3>
+<h3>Forked from Stoqey Inc IBKR<h3>
 </div>

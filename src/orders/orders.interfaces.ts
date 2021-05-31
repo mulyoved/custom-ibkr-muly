@@ -8,26 +8,12 @@ import {
     StopOrder,
     StopLimitOrder,
     TrailingStopOrder,
-    ComboLeg,
-    TagValue,
+    OrderType,
 } from '@stoqey/ib';
 
-export {ComboLeg, TagValue} from '@stoqey/ib';
+export {ComboLeg, TagValue, Order, Contract, SecType} from '@stoqey/ib';
 
 export type action = 'BUY' | 'SELL';
-
-export type ContractType = 'FOP' | 'FUT' | 'OPT' | 'STK' | 'BAG' | 'CFD' | 'CASH' | 'IND';
-
-export const ContractEnum = {
-    FOP: 'FOP' as ContractType,
-    FUTURE: 'FUT' as ContractType,
-    OPTION: 'OPT' as ContractType,
-    STOCK: 'STK' as ContractType,
-    COMBO: 'BAG' as ContractType,
-    CFD: 'CFD' as ContractType,
-    FOREX: 'CASH' as ContractType,
-    IND: 'IND' as ContractType,
-};
 
 // https://interactivebrokers.github.io/tws-api/interfaceIBApi_1_1EWrapper.html#a17f2a02d6449710b6394d0266a353313
 export type OrderStatusType =
@@ -145,17 +131,6 @@ export interface OrderStatus {
 //     warningText: string;
 // }
 
-// ORDER TRADE
-export type OrderAction = 'BUY' | 'SELL';
-
-export type OrderType =
-    | 'limit' // ib.order.limit('SELL', 1, 9999)
-    | 'market' // .order.market(action, quantity, transmitOrder, goodAfterTime, goodTillDate)
-    | 'marketClose' // .order.marketClose(action, quantity, price, transmitOrder)
-    | 'stop' // .order.stop(action, quantity, price, transmitOrder, parentId, tif)
-    | 'stopLimit' // .order.stopLimit(action, quantity, limitPrice, stopPrice, transmitOrder, parentId, tif)
-    | 'trailingStop'; // .order.trailingStop(action, quantity, auxPrice, tif, transmitOrder, parentId)
-
 export const GetOrderType = (
     orderType: OrderType
 ):
@@ -166,27 +141,26 @@ export const GetOrderType = (
     | typeof TrailingStopOrder
     | typeof MarketOrder => {
     switch (orderType) {
-        case 'limit':
+        case OrderType.LMT:
             return LimitOrder;
-        case 'marketClose':
+        case OrderType.MOC:
             return MarketCloseOrder;
-        case 'stop':
+        case OrderType.STP:
             return StopOrder;
-        case 'stopLimit':
+        case OrderType.STP_LMT:
             return StopLimitOrder;
-        case 'trailingStop':
+        case OrderType.TRAIL:
             return TrailingStopOrder;
 
         default:
-        case 'market':
+        case OrderType.MKT:
             return MarketOrder;
     }
 };
-interface OrderBase {
-    symbol: string;
-    action: OrderAction;
-    type: OrderType;
-    parameters: any[]; // 'SELL', 1, 9999,
+
+export interface OrderBase extends Order {
+    symbol?: string;
+    orderType?: OrderType;
     size?: number; // optional
     capital?: number; // optional
     exitTrade?: boolean; // optional
@@ -204,122 +178,6 @@ interface OrderBase {
     currency?: string;
 }
 
-interface OrderOptBase extends OrderBase {
-    strike: string;
-    right: OptionType;
-    expiry: string; // "20210423"
-    exchange?: string;
-    currency?: string;
-}
-
-export interface OrderStock extends OrderBase {
-    secType: 'STK';
-}
-
-export interface OrderCfd extends OrderBase {
-    secType: 'CFD';
-}
-
-export interface OrderCombo extends OrderBase {
-    secType: 'BAG';
-    comboLegs: ComboLeg[];
-    /**
-     * Advanced parameters for Smart combo routing.
-     *
-     * These features are for both guaranteed and non-guaranteed combination orders routed to Smart, and are available based on combo type and order type.
-     * SmartComboRoutingParams is similar to AlgoParams in that it makes use of tag/value pairs to add parameters to combo orders.
-     *
-     * Make sure that you fully understand how Advanced Combo Routing works in TWS itself first: https://www.interactivebrokers.com/en/software/tws/usersguidebook/specializedorderentry/advanced_combo_routing.htm
-     *
-     * The parameters cover the following capabilities:
-     *
-     * - Non-Guaranteed - Determine if the combo order is Guaranteed or Non-Guaranteed.
-     *
-     * Tag = NonGuaranteed
-     *
-     * Value = 0: The order is guaranteed
-     *
-     * Value = 1: The order is non-guaranteed
-     *
-     * - Select Leg to Fill First - User can specify which leg to be executed first.
-     *
-     * Tag = LeginPrio
-     *
-     * Value = -1: No priority is assigned to either combo leg
-     *
-     * Value = 0: Priority is assigned to the first leg being added to the comboLeg
-     *
-     * Value = 1: Priority is assigned to the second leg being added to the comboLeg
-     *
-     * Note: The LeginPrio parameter can only be applied to two-legged combo.
-     *
-     * - Maximum Leg-In Combo Size - Specify the maximum allowed leg-in size per segment
-     *
-     * Tag = MaxSegSize
-     *
-     * Value = Unit of combo size
-     *
-     * - Do Not Start Next Leg-In if Previous Leg-In Did Not Finish - Specify whether or not the system should attempt to fill the next segment before the current segment fills.
-     *
-     * Tag = DontLeginNext
-     *
-     *
-     * Value = 0: Start next leg-in even if previous leg-in did not finish
-     * Value = 1: Do not start next leg-in if previous leg-in did not finish
-     *
-     * - Price Condition - Combo order will be rejected or cancelled if the leg market price is outside of the specified price range [CondPriceMin, CondPriceMax]
-     *
-     * Tag = PriceCondConid: The ContractID of the combo leg to specify price condition on
-     *
-     * Value = The ContractID
-     *
-     * Tag = CondPriceMin: The lower price range of the price condition
-     *
-     * Value = The lower price
-     *
-     * Tag = CondPriceMax: The upper price range of the price condition
-     *
-     * Value = The upper price
-     */
-    smartComboRoutingParams: TagValue[];
-}
-
-export interface OrderInd extends OrderBase {
-    secType: 'IND';
-}
-
-export interface OrderForex extends OrderBase {
-    secType: 'CASH';
-    currency: string; // "USD"
-}
-
-export interface OrderFuture extends OrderBase {
-    secType: 'FUT';
-    expiry: string; // "20210423" || "202104"
-    currency: string;
-    exchange: string;
-    multiplier: number;
-}
-
-export interface OrderOption extends OrderOptBase {
-    secType: 'OPT';
-}
-
-export interface OrderFop extends OrderOptBase {
-    secType: 'FOP';
-    multiplier?: number;
-}
-
-export type OrderGeneral =
-    | OrderCfd
-    | OrderCombo
-    | OrderInd
-    | OrderForex
-    | OrderFuture
-    | OrderOption
-    | OrderFop
-    | OrderStock;
-
 /**
  * Option types.
  */
@@ -329,10 +187,6 @@ export enum OptionType {
 
     /** Call option. */
     Call = 'C',
-}
-
-export interface ContractDictionary<T> {
-    [key: string]: T;
 }
 
 // CREATE Sale

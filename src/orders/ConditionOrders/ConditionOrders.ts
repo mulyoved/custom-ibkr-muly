@@ -2,8 +2,8 @@ import {IBApi, EventName, ErrorCode, Contract, Order, OrderAction} from '@stoqey
 import {IB_HOST, IB_PORT} from '../../config';
 import {IBKREVENTS} from '../../events';
 import {IbkrEvents} from '../../events/IbkrEvents';
-import {OrderWithContract, OrderGeneral, OrderType, OrderCombo} from '../orders.interfaces';
-import {OrderTypeCondition} from '..';
+import {OrderWithContract} from '../orders.interfaces';
+import {OrderType} from '..';
 import OrderCondition from './condition/order-condition';
 
 const ibkrEvents = IbkrEvents.Instance;
@@ -115,7 +115,7 @@ export class ConditionOrders {
             const takeProfit: Order = {
                 orderId: orderId + 1,
                 action: orderWithoutTransmit.action === 'BUY' ? OrderAction.SELL : OrderAction.BUY,
-                orderType: OrderTypeCondition.OrderType.LMT,
+                orderType: OrderType.LMT,
                 totalQuantity: orderWithoutTransmit.totalQuantity,
                 lmtPrice: takeProfitLimitPrice,
                 parentId: parentOrder.orderId,
@@ -126,7 +126,7 @@ export class ConditionOrders {
             const stopLoss: Order = {
                 orderId: orderId + 2,
                 action: orderWithoutTransmit.action === 'BUY' ? OrderAction.SELL : OrderAction.BUY,
-                orderType: OrderTypeCondition.OrderType.STP,
+                orderType: OrderType.STP,
                 // Stop trigger price
                 auxPrice: stopLossPrice,
                 totalQuantity: orderWithoutTransmit.totalQuantity,
@@ -144,7 +144,7 @@ export class ConditionOrders {
                     orderId: orderId + 3,
                     action:
                         orderWithoutTransmit.action === 'BUY' ? OrderAction.SELL : OrderAction.BUY,
-                    orderType: OrderTypeCondition.OrderType.MKT,
+                    orderType: OrderType.MKT,
                     totalQuantity: orderWithoutTransmit.totalQuantity,
                     parentId: parentOrder.orderId,
                     conditions,
@@ -172,7 +172,7 @@ export class ConditionOrders {
             orderId: 0,
             action: OrderAction.BUY,
             totalQuantity: 0,
-            orderType: OrderTypeCondition.OrderType.LMT,
+            orderType: OrderType.LMT,
             lmtPrice: 0,
             auxPrice: 0,
             parentId: 0,
@@ -187,54 +187,5 @@ export class ConditionOrders {
             }
         }
         return orderWithContract as Order;
-    }
-
-    /**
-     * Converts an order general object like an OrderStock into an Order that you can use with ConditionOrders placeOrder methods.
-     * NOTE: After converting, you will receive a few properties, please assign your desired properties in the returned Order.
-     * @param order OrderGeneral to convert
-     * @returns Order object compatible with conditions.
-     */
-    public toNewOrder(order: OrderGeneral): Order {
-        const convertedOrder: Order = {};
-        switch (order.secType) {
-            case 'BAG':
-            case 'CASH':
-            case 'CFD':
-            case 'FOP':
-            case 'FUT':
-            case 'IND':
-            case 'OPT':
-            case 'STK':
-                convertedOrder.orderType = this.convertOrderType(order.type);
-                convertedOrder.action = order.action as any;
-                convertedOrder.totalQuantity = order.parameters[0];
-                convertedOrder.lmtPrice = order.parameters[1];
-            case 'BAG':
-                convertedOrder.smartComboRoutingParams = (order as OrderCombo).smartComboRoutingParams;
-                break;
-            default:
-                break;
-        }
-        return convertedOrder;
-    }
-
-    private convertOrderType(orderType: OrderType): OrderTypeCondition.OrderType {
-        switch (orderType) {
-            case 'limit':
-                return OrderTypeCondition.OrderType.LMT;
-            case 'market':
-                return OrderTypeCondition.OrderType.MKT;
-            case 'marketClose':
-                return OrderTypeCondition.OrderType.MOC;
-            case 'stop':
-                return OrderTypeCondition.OrderType.STP;
-            case 'stopLimit':
-                return OrderTypeCondition.OrderType.STP_LMT;
-            case 'trailingStop':
-                return OrderTypeCondition.OrderType.TRAIL;
-            default:
-                return OrderTypeCondition.OrderType.MKT;
-        }
     }
 }
