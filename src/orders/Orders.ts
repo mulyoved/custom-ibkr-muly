@@ -512,8 +512,6 @@ export class Orders {
             };
 
             // Place order
-            console.log(`tickerToUse: ${tickerToUse} - contract: ${contract} - order: ${order}`);
-
             ib.placeOrder(tickerToUse, contract, order);
 
             // Add it
