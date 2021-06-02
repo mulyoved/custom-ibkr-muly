@@ -358,8 +358,8 @@ export class Orders {
     /**
      * Place Order
      * Order is added to queue if is already processing one order
-     * @order
-     * @contract
+     * @order Order to place
+     * @contract Contract to place the order
      * @options ? {}
      * @when Until IBKR releases a new OrderId, then order is placed and process can pick other orders
      */

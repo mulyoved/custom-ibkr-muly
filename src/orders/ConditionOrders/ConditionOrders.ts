@@ -1,15 +1,15 @@
-import {IBApi, EventName, ErrorCode, Contract, Order, OrderAction} from '@stoqey/ib';
-import {IB_HOST, IB_PORT} from '../../config';
+import IB, {EventName, ErrorCode, Contract, Order, OrderAction} from '@stoqey/ib';
 import {IBKREVENTS} from '../../events';
 import {IbkrEvents} from '../../events/IbkrEvents';
 import {OrderWithContract} from '../orders.interfaces';
 import {OrderType} from '..';
 import OrderCondition from './condition/order-condition';
+import IBKRConnection from '../../connection/IBKRConnection';
 
 const ibkrEvents = IbkrEvents.Instance;
 
 export class ConditionOrders {
-    ib: IBApi = null;
+    ib: IB = null;
 
     private static _instance: ConditionOrders;
 
@@ -22,7 +22,7 @@ export class ConditionOrders {
     private constructor() {
         const self = this;
 
-        ibkrEvents.on(EventName.connected, async () => {
+        ibkrEvents.on(IBKREVENTS.CONNECTED, async () => {
             self.init();
         });
 
@@ -36,14 +36,7 @@ export class ConditionOrders {
         const self = this;
 
         if (!self.ib) {
-            // create IBApi object
-
-            const ib = new IBApi({
-                // clientId: 0,
-                host: IB_HOST,
-                port: IB_PORT,
-            });
-
+            const ib = IBKRConnection.Instance.getIBKR();
             self.ib = ib;
 
             ib.connect();
@@ -64,7 +57,7 @@ export class ConditionOrders {
         transmitUpd?: boolean
     ): Promise<void> => {
         const self = this;
-        const ib: IBApi = self.ib;
+        const ib: IB = self.ib;
 
         ib.on(EventName.error, (err: Error, code: ErrorCode, reqId: number) => {
             console.error(`${err.message} - code: ${code} - reqId: ${reqId}`, err.stack);
@@ -98,7 +91,7 @@ export class ConditionOrders {
         conditions?: OrderCondition[]
     ): Promise<void> => {
         const self = this;
-        const ib: IBApi = self.ib;
+        const ib: IB = self.ib;
 
         ib.on(EventName.error, (err: Error, code: ErrorCode, reqId: number) => {
             console.error(`${err.message} - code: ${code} - reqId: ${reqId}`, err.stack);

@@ -121,106 +121,106 @@ describe('Condition Orders', () => {
         expect(contracts).to.be.not.null;
     });
 
-    // it('Place Conditional Order', async (done) => {
-    //     let completed = false;
+    it('Place Conditional Order', async (done) => {
+        let completed = false;
 
-    //     const getPlacedOrder = async () => {
-    //         const handleData = (data) => {
-    //             ibkrEvents.off(IBKREVENTS.ORDER_FILLED, handleData);
-    //             if (!completed) {
-    //                 done();
-    //                 completed = true;
-    //             }
-    //         };
+        const getPlacedOrder = async () => {
+            const handleData = (data) => {
+                ibkrEvents.off(IBKREVENTS.ORDER_FILLED, handleData);
+                if (!completed) {
+                    done();
+                    completed = true;
+                }
+            };
 
-    //         const conditionOrderInstance = ConditionOrders.Instance;
+            const conditionOrderInstance = ConditionOrders.Instance;
 
-    //         const contractDetails: ContractDetailsParams = {
-    //             symbol: 'MMM',
-    //             exchange: 'SMART',
-    //             currency: 'USD', // Valid Currency
-    //             secType: 'STK', // Provide a valid secType
-    //         };
+            const contractDetails: ContractDetailsParams = {
+                symbol: 'MMM',
+                exchange: 'SMART',
+                currency: 'USD', // Valid Currency
+                secType: 'STK', // Provide a valid secType
+            };
 
-    //         const contracts: ContractDetails[] = await getContractDetails(contractDetails); // Query contracts and choose one, use as contracts[i].contract.conId
+            const contracts: ContractDetails[] = await getContractDetails(contractDetails); // Query contracts and choose one, use as contracts[i].contract.conId
 
-    //         log('Entered in callback');
+            log('Entered in callback');
 
-    //         // Reference for parameters in conditions: https://interactivebrokers.github.io/tws-api/order_conditions.html
-    //         const priceCondition: PriceCondition = new PriceCondition(
-    //             10,
-    //             TriggerMethod.Default,
-    //             contracts[0].contract.conId,
-    //             'SMART',
-    //             true,
-    //             ConjunctionConnection.AND
-    //         );
-    //         const execCondition: ExecutionCondition = new ExecutionCondition(
-    //             'ISLAND',
-    //             SecType.STK,
-    //             'FB',
-    //             ConjunctionConnection.OR
-    //         );
-    //         const marginCondition: MarginCondition = new MarginCondition(
-    //             10,
-    //             true,
-    //             ConjunctionConnection.OR
-    //         );
-    //         const percentChangeCondition: PercentChangeCondition = new PercentChangeCondition(
-    //             10,
-    //             contracts[0].contract.conId,
-    //             'ISLAND',
-    //             true,
-    //             ConjunctionConnection.OR
-    //         ); // Exchange must be the same that the contract has
-    //         const timeCondition: TimeCondition = new TimeCondition(
-    //             '20210428 11:32:50',
-    //             true,
-    //             ConjunctionConnection.OR
-    //         );
-    //         const volumeCondition: VolumeCondition = new VolumeCondition(
-    //             500,
-    //             contracts[0].contract.conId,
-    //             'SMART',
-    //             true,
-    //             ConjunctionConnection.AND
-    //         ); // Volume in values of hundreds E.g.: 100, 200, 300...
+            // Reference for parameters in conditions: https://interactivebrokers.github.io/tws-api/order_conditions.html
+            const priceCondition: PriceCondition = new PriceCondition(
+                10,
+                TriggerMethod.Default,
+                contracts[0].contract.conId,
+                'SMART',
+                true,
+                ConjunctionConnection.AND
+            );
+            const execCondition: ExecutionCondition = new ExecutionCondition(
+                'ISLAND',
+                SecType.STK,
+                'FB',
+                ConjunctionConnection.OR
+            );
+            const marginCondition: MarginCondition = new MarginCondition(
+                10,
+                true,
+                ConjunctionConnection.OR
+            );
+            const percentChangeCondition: PercentChangeCondition = new PercentChangeCondition(
+                10,
+                contracts[0].contract.conId,
+                'ISLAND',
+                true,
+                ConjunctionConnection.OR
+            ); // Exchange must be the same that the contract has
+            const timeCondition: TimeCondition = new TimeCondition(
+                '20210428 11:32:50',
+                true,
+                ConjunctionConnection.OR
+            );
+            const volumeCondition: VolumeCondition = new VolumeCondition(
+                500,
+                contracts[0].contract.conId,
+                'SMART',
+                true,
+                ConjunctionConnection.AND
+            ); // Volume in values of hundreds E.g.: 100, 200, 300...
 
-    //         order.conditions = [
-    //             priceCondition,
-    //             execCondition,
-    //             marginCondition,
-    //             percentChangeCondition,
-    //             timeCondition,
-    //             volumeCondition,
-    //         ];
+            order.conditions = [
+                priceCondition,
+                execCondition,
+                marginCondition,
+                percentChangeCondition,
+                timeCondition,
+                volumeCondition,
+            ];
 
-    //         optionOrderBuyInM.conditions = [
-    //             priceCondition,
-    //             execCondition,
-    //             marginCondition,
-    //             percentChangeCondition,
-    //             timeCondition,
-    //             volumeCondition,
-    //         ];
+            optionOrderBuyInM.conditions = [
+                priceCondition,
+                execCondition,
+                marginCondition,
+                percentChangeCondition,
+                timeCondition,
+                volumeCondition,
+            ];
 
-    //         const delayTime = 1000;
+            const delayTime = 1000;
 
-    //         const orders = [
-    //             async () => conditionOrderInstance.placeOrder(order, contract),
-    //             async () => delay(delayTime),
-    //             async () =>
-    //                 conditionOrderInstance.placeOrder(optionOrderBuyInM, optionContractBuyInM),
-    //             async () => delay(delayTime),
-    //         ];
+            const orders = [
+                async () => conditionOrderInstance.placeOrder(order, contract),
+                async () => delay(delayTime),
+                async () =>
+                    conditionOrderInstance.placeOrder(optionOrderBuyInM, optionContractBuyInM),
+                async () => delay(delayTime),
+            ];
 
-    //         for (const order of orders) {
-    //             await order();
-    //         }
-    //     };
+            for (const order of orders) {
+                await order();
+            }
+        };
 
-    //     await getPlacedOrder();
-    // });
+        await getPlacedOrder();
+    });
 
     // it('Place bracket conditional order', async (done) => {
     //     let completed = false;
@@ -339,48 +339,48 @@ describe('Condition Orders', () => {
     //     await getPlacedOrder();
     // });
 
-    it('Update bracket order', async (done) => {
-        const OrderInstance = Orders.Instance;
-        const conditionOrderInstance = ConditionOrders.Instance;
-        const results = await OrderInstance.getOpenOrders();
-        const parent: OrderWithContract = results.find(
-            (orderRes) =>
-                orderRes.symbol === contract.symbol &&
-                orderRes.secType === contract.secType &&
-                orderRes.lmtPrice === order.lmtPrice &&
-                orderRes.action === order.action
-        );
-        let stopLoss: OrderWithContract;
-        let takeProfit: OrderWithContract;
+    // it('Update bracket order', async (done) => {
+    //     const OrderInstance = Orders.Instance;
+    //     const conditionOrderInstance = ConditionOrders.Instance;
+    //     const results = await OrderInstance.getOpenOrders();
+    //     const parent: OrderWithContract = results.find(
+    //         (orderRes) =>
+    //             orderRes.symbol === contract.symbol &&
+    //             orderRes.secType === contract.secType &&
+    //             orderRes.lmtPrice === order.lmtPrice &&
+    //             orderRes.action === order.action
+    //     );
+    //     let stopLoss: OrderWithContract;
+    //     let takeProfit: OrderWithContract;
 
-        const len = results.length;
-        for (let i = 0; i < len; i++) {
-            const value = results[i];
-            if (value.parentId === parent.orderId && value.orderType === parent.orderType) {
-                takeProfit = value;
-            }
-            if (value.parentId === parent.orderId && value.auxPrice < parent.lmtPrice) {
-                stopLoss = value;
-            }
-        }
-        const cleanedTP = conditionOrderInstance.convertToOrder(takeProfit);
-        cleanedTP.lmtPrice = cleanedTP.lmtPrice - 2.5;
-        const cleanedSL = conditionOrderInstance.convertToOrder(stopLoss);
-        cleanedSL.auxPrice = cleanedSL.auxPrice + 2.5;
+    //     const len = results.length;
+    //     for (let i = 0; i < len; i++) {
+    //         const value = results[i];
+    //         if (value.parentId === parent.orderId && value.orderType === parent.orderType) {
+    //             takeProfit = value;
+    //         }
+    //         if (value.parentId === parent.orderId && value.auxPrice < parent.lmtPrice) {
+    //             stopLoss = value;
+    //         }
+    //     }
+    //     const cleanedTP = conditionOrderInstance.convertToOrder(takeProfit);
+    //     cleanedTP.lmtPrice = cleanedTP.lmtPrice - 2.5;
+    //     const cleanedSL = conditionOrderInstance.convertToOrder(stopLoss);
+    //     cleanedSL.auxPrice = cleanedSL.auxPrice + 2.5;
 
-        const delayTime = 1000;
+    //     const delayTime = 1000;
 
-        const orders = [
-            async () =>
-                conditionOrderInstance.placeOrder(cleanedTP, contract, takeProfit.orderId, true),
-            async () => delay(delayTime),
-            async () =>
-                conditionOrderInstance.placeOrder(cleanedSL, contract, stopLoss.orderId, true),
-            async () => delay(delayTime),
-        ];
+    //     const orders = [
+    //         async () =>
+    //             conditionOrderInstance.placeOrder(cleanedTP, contract, takeProfit.orderId, true),
+    //         async () => delay(delayTime),
+    //         async () =>
+    //             conditionOrderInstance.placeOrder(cleanedSL, contract, stopLoss.orderId, true),
+    //         async () => delay(delayTime),
+    //     ];
 
-        for (const order of orders) {
-            await order();
-        }
-    });
+    //     for (const order of orders) {
+    //         await order();
+    //     }
+    // });
 });
