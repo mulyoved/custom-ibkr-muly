@@ -40,3 +40,5 @@ export interface ContractDetails {
     evMultiplier?: any;
     lastTradeDateOrContractMonth?: string;
 }
+
+export const ibkrVersion = () => 'custome 1.0.1';

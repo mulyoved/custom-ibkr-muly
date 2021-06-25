@@ -1,5 +1,5 @@
 {
-  "name": "custom-ibkr",
+  "name": "custom-ibkr-muly",
   "private": false,
   "version": "1.8.22",
   "description": "NodeJS Interactive Brokers wrapper & utilities - Custom Version",
