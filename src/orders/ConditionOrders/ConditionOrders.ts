@@ -156,6 +156,76 @@ export class ConditionOrders {
     };
 
     /**
+     * Place a bracket order, you can use conditions here.
+     * @param order Order to place
+     * @param contract Contract to place the order
+     * @param takeProfitLimitPrice Limit price of the take profit
+     */
+    public placeStrategyOrder = async (
+        order: Order,
+        contract: Contract,
+        takeProfitLimitPrice: number,
+        conditions?: OrderCondition[],
+        customizeOrders?: (orders: Order[]) => Order[] | null
+    ): Promise<void> => {
+        const self = this;
+        const ib: IB = self.ib;
+
+        ib.on(EventName.error, (err: Error, code: ErrorCode, reqId: number) => {
+            console.error(`${err.message} - code: ${code} - reqId: ${reqId}`, err.stack);
+        }).once(EventName.nextValidId, (orderId: number) => {
+            const {transmit, ...orderWithoutTransmit} = order;
+            const parentOrder: Order = {
+                ...orderWithoutTransmit,
+                orderId,
+                // The parent and children orders will need this attribute set to false to prevent accidental executions.
+                // The LAST CHILD will have it set to true.
+                transmit: false,
+            };
+
+            const takeProfit: Order = {
+                orderId: orderId + 1,
+                action: orderWithoutTransmit.action === 'BUY' ? OrderAction.SELL : OrderAction.BUY,
+                orderType: OrderType.LMT,
+                totalQuantity: orderWithoutTransmit.totalQuantity,
+                lmtPrice: takeProfitLimitPrice,
+                parentId: parentOrder.orderId,
+                transmit: false,
+                smartComboRoutingParams: order.smartComboRoutingParams,
+            };
+
+            let orders = [parentOrder, takeProfit];
+
+            if (conditions) {
+                const orderExit: Order = {
+                    orderId: orderId + 2,
+                    action:
+                        orderWithoutTransmit.action === 'BUY' ? OrderAction.SELL : OrderAction.BUY,
+                    orderType: OrderType.MKT,
+                    totalQuantity: orderWithoutTransmit.totalQuantity,
+                    parentId: parentOrder.orderId,
+                    conditions,
+                    transmit,
+                    smartComboRoutingParams: order.smartComboRoutingParams,
+                };
+                orders.push(orderExit);
+            }
+
+            if (customizeOrders) {
+                orders = customizeOrders(orders);
+            }
+
+            if (orders) {
+                orders.forEach((or) => {
+                    ib.placeOrder(or.orderId, contract, or);
+                });
+            }
+        });
+
+        ib.reqIds();
+    };
+
+    /**
      * Converts OrderWithContract object into an Order object to use in update or modifications.
      * @param orderWithContract To convert into an Order
      * @returns Order object from orderWithContract data
