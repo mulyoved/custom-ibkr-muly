@@ -162,10 +162,8 @@ export class ConditionOrders {
      * @param takeProfitLimitPrice Limit price of the take profit
      */
     public placeStrategyOrder = async (
-        order: Order,
+        orders: Order[],
         contract: Contract,
-        takeProfitLimitPrice: number,
-        conditions?: OrderCondition[],
         customizeOrders?: (orders: Order[]) => Order[] | null
     ): Promise<void> => {
         const self = this;
@@ -174,42 +172,11 @@ export class ConditionOrders {
         ib.on(EventName.error, (err: Error, code: ErrorCode, reqId: number) => {
             console.error(`${err.message} - code: ${code} - reqId: ${reqId}`, err.stack);
         }).once(EventName.nextValidId, (orderId: number) => {
-            const {transmit, ...orderWithoutTransmit} = order;
-            const parentOrder: Order = {
-                ...orderWithoutTransmit,
-                orderId,
-                // The parent and children orders will need this attribute set to false to prevent accidental executions.
-                // The LAST CHILD will have it set to true.
-                transmit: false,
-            };
-
-            const takeProfit: Order = {
-                orderId: orderId + 1,
-                action: orderWithoutTransmit.action === 'BUY' ? OrderAction.SELL : OrderAction.BUY,
-                orderType: OrderType.LMT,
-                totalQuantity: orderWithoutTransmit.totalQuantity,
-                lmtPrice: takeProfitLimitPrice,
-                parentId: parentOrder.orderId,
-                transmit: false,
-                smartComboRoutingParams: order.smartComboRoutingParams,
-            };
-
-            let orders = [parentOrder, takeProfit];
-
-            if (conditions) {
-                const orderExit: Order = {
-                    orderId: orderId + 2,
-                    action:
-                        orderWithoutTransmit.action === 'BUY' ? OrderAction.SELL : OrderAction.BUY,
-                    orderType: OrderType.MKT,
-                    totalQuantity: orderWithoutTransmit.totalQuantity,
-                    parentId: parentOrder.orderId,
-                    conditions,
-                    transmit,
-                    smartComboRoutingParams: order.smartComboRoutingParams,
-                };
-                orders.push(orderExit);
-            }
+            orders[0].orderId = orderId;
+            orders[1].orderId = orderId + 1;
+            orders[1].parentId = orderId;
+            orders[2].orderId = orderId + 2;
+            orders[2].parentId = orderId;
 
             if (customizeOrders) {
                 orders = customizeOrders(orders);
