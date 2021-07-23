@@ -70,6 +70,13 @@ export class ConditionOrders {
                 orderId: setOrderId,
                 transmit: setTransmit,
             };
+
+            console.log(`muly:ConditionOrders:placeOrder PLACE v2`, {
+                setOrderId,
+                orderWithId,
+                contract,
+            });
+
             ib.placeOrder(setOrderId, contract, orderWithId);
         });
 
@@ -184,6 +191,11 @@ export class ConditionOrders {
 
             if (orders) {
                 orders.forEach((or) => {
+                    console.log(`muly:ConditionOrders:placeStrategyOrder PLACE v2`, {
+                        or,
+                        contract,
+                    });
+
                     ib.placeOrder(or.orderId, contract, or);
                 });
             }

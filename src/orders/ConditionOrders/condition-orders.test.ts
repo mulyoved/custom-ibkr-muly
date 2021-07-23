@@ -24,29 +24,42 @@ const symbol = 'A';
 const symbolOpt = 'GOOG';
 
 const contract: Contract = {
-    symbol,
-    exchange: 'NYSE',
-    currency: 'USD',
-    secType: SecType.STK,
+    // symbol,
+    // exchange: 'NYSE',
+    // currency: 'USD',
+    // secType: SecType.STK,
+
+  currency: "USD",
+  exchange: 'GLOBEX',
+  lastTradeDateOrContractMonth: '20210806 15:00 CST',
+  localSymbol: 'EW1Q1 C4350',
+  multiplier: 50,
+  right: OptionType.Call,
+  secType: SecType.FOP,
+  strike: 4350,
+  symbol: "ES",
+  tradingClass: 'EW1',
 };
 
 const order: Order = {
-    orderType: OrderType.LMT,
+    orderType: OrderType.SNAP_MID,
     action: OrderAction.BUY,
-    totalQuantity: 10,
-    lmtPrice: 100,
-    transmit: true,
+    totalQuantity: 1,
+    transmit: false,
     conditionsIgnoreRth: true,
-    conditionsCancelOrder: false,
+    conditionsCancelOrder: true,
+    auxPrice: 0,
 };
 
 const optionContractBuyInM: Contract = {
-    symbol: symbolOpt,
-    lastTradeDateOrContractMonth: '20210618',
-    strike: 2000,
-    right: OptionType.Put,
-    exchange: 'SMART',
-    secType: SecType.OPT,
+  currency: "USD",
+  exchange: 'GLOBEX',
+    symbol: "ES",
+    lastTradeDateOrContractMonth: '20210806 15:00 CST',
+    strike: 4350,
+    right: OptionType.Call,
+    secType: SecType.FOP,
+
 };
 
 const optionOrderBuyInM: Order = {
@@ -92,7 +105,7 @@ describe('Condition Orders', () => {
     it('should get open orders', async () => {
         const OrderInstance = Orders.Instance;
 
-        log('connected now, placing order now');
+        log('connected now, getOpenOrders');
         const results = await OrderInstance.getOpenOrders();
 
         log('Open orders are', JSON.stringify(results));
@@ -174,7 +187,7 @@ describe('Condition Orders', () => {
                 ConjunctionConnection.OR
             ); // Exchange must be the same that the contract has
             const timeCondition: TimeCondition = new TimeCondition(
-                '20210428 11:32:50',
+                '20210728 11:32:50',
                 true,
                 ConjunctionConnection.OR
             );
@@ -187,12 +200,12 @@ describe('Condition Orders', () => {
             ); // Volume in values of hundreds E.g.: 100, 200, 300...
 
             order.conditions = [
-                priceCondition,
-                execCondition,
-                marginCondition,
-                percentChangeCondition,
+                // priceCondition,
+                // execCondition,
+                // marginCondition,
+                // percentChangeCondition,
                 timeCondition,
-                volumeCondition,
+                // volumeCondition,
             ];
 
             optionOrderBuyInM.conditions = [
@@ -206,12 +219,14 @@ describe('Condition Orders', () => {
 
             const delayTime = 1000;
 
+          console.log(`muly:condition-orders.test:getPlacedOrder`, {o: JSON.stringify(order), order, contract});
+
             const orders = [
                 async () => conditionOrderInstance.placeOrder(order, contract),
-                async () => delay(delayTime),
-                async () =>
-                    conditionOrderInstance.placeOrder(optionOrderBuyInM, optionContractBuyInM),
-                async () => delay(delayTime),
+                // async () => delay(delayTime),
+                // async () =>
+                //     conditionOrderInstance.placeOrder(optionOrderBuyInM, optionContractBuyInM),
+                // async () => delay(delayTime),
             ];
 
             for (const order of orders) {
