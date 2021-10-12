@@ -1,7 +1,7 @@
 import IB, {EventName, ErrorCode, Contract, Order, OrderAction} from '@stoqey/ib';
 import {IBKREVENTS} from '../../events';
 import {IbkrEvents} from '../../events/IbkrEvents';
-import {OrderWithContract} from '../orders.interfaces';
+import {OrderContractPair, OrderWithContract} from '../orders.interfaces';
 import {OrderType} from '..';
 import OrderCondition from './condition/order-condition';
 import IBKRConnection from '../../connection/IBKRConnection';
@@ -169,39 +169,60 @@ export class ConditionOrders {
      * @param takeProfitLimitPrice Limit price of the take profit
      */
     public placeStrategyOrder = async (
-        orders: Order[],
-        contract: Contract,
-        customizeOrders?: (orders: Order[]) => Order[] | null
+        orderAndContracts: OrderContractPair[],
+        customizeOrders?: (orderAndContracts: OrderContractPair[]) => OrderContractPair[] | null
     ): Promise<void> => {
         const self = this;
         const ib: IB = self.ib;
 
-        ib.on(EventName.error, (err: Error, code: ErrorCode, reqId: number) => {
-            console.error(`${err.message} - code: ${code} - reqId: ${reqId}`, err.stack);
-        }).once(EventName.nextValidId, (orderId: number) => {
-            orders[0].orderId = orderId;
-            orders[1].orderId = orderId + 1;
-            orders[1].parentId = orderId;
-            orders[2].orderId = orderId + 2;
-            orders[2].parentId = orderId;
+        const delay = async (t: number): Promise<void> => {
+            return new Promise((resolve) => {
+                setTimeout(resolve.bind(null, {d: true}), t);
+            });
+        };
 
-            if (customizeOrders) {
-                orders = customizeOrders(orders);
+        const transmitOrders = async (orderAndContracts: OrderContractPair[]): Promise<void> => {
+            if (orderAndContracts) {
+                for (const or of orderAndContracts) {
+                    if (or.order.transmit) {
+                        await delay(250);
+                    }
+                    ib.placeOrder(or.order.orderId, or.contract, or.order);
+                }
             }
+        };
 
-            if (orders) {
-                orders.forEach((or) => {
-                    console.log(`muly:ConditionOrders:placeStrategyOrder PLACE v2`, {
-                        or,
-                        contract,
-                    });
+        return new Promise((resolve: any, reject: any) => {
+            ib.on(EventName.error, (err: Error, code: ErrorCode, reqId: number) => {
+                console.error(`${err.message} - code: ${code} - reqId: ${reqId}`, err.stack);
+                reject(err);
+            }).once(EventName.nextValidId, (orderId: number) => {
+                orderAndContracts[0].order.orderId = orderId;
+                orderAndContracts[1].order.orderId = orderId + 1;
+                orderAndContracts[1].order.parentId = orderId;
+                orderAndContracts[2].order.orderId = orderId + 2;
+                orderAndContracts[2].order.parentId = orderId;
 
-                    ib.placeOrder(or.orderId, contract, or);
-                });
-            }
+                if (orderAndContracts[3]) {
+                    orderAndContracts[3].order.orderId = orderId + 3;
+                    orderAndContracts[3].order.parentId = orderId + 1;
+                }
+                if (orderAndContracts[4]) {
+                    orderAndContracts[4].order.orderId = orderId + 4;
+                    orderAndContracts[4].order.parentId = orderId + 1;
+                }
+
+                if (customizeOrders) {
+                    orderAndContracts = customizeOrders(orderAndContracts);
+                }
+
+                transmitOrders(orderAndContracts)
+                    .then(() => resolve())
+                    .catch((err) => reject(err));
+            });
+
+            ib.reqIds();
         });
-
-        ib.reqIds();
     };
 
     /**

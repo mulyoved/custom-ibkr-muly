@@ -107,6 +107,11 @@ export interface OrderWithContract extends Order, Contract {
     orderState: OrderState;
 }
 
+export interface OrderContractPair {
+    order: Order;
+    contract: Contract;
+}
+
 export interface OrderStatus {
     status: OrderStatusType;
     filled: number;
