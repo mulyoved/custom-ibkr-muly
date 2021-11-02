@@ -170,12 +170,17 @@ export class ConditionOrders {
      */
     public placeStrategyOrder = async (
         orderAndContracts: OrderContractPair[],
-        customizeOrders?: (orderAndContracts: OrderContractPair[]) => OrderContractPair[] | null
+        delayTm: number,
+        customizeOrders?: (
+            orderAndContracts: OrderContractPair[],
+            version: string
+        ) => OrderContractPair[] | null
     ): Promise<void> => {
         const self = this;
         const ib: IB = self.ib;
 
         const delay = async (t: number): Promise<void> => {
+            console.log(`muly:ConditionOrders:transmitOrders DELAY ${t}`);
             return new Promise((resolve) => {
                 setTimeout(resolve.bind(null, {d: true}), t);
             });
@@ -184,9 +189,10 @@ export class ConditionOrders {
         const transmitOrders = async (orderAndContracts: OrderContractPair[]): Promise<void> => {
             if (orderAndContracts) {
                 for (const or of orderAndContracts) {
-                    if (or.order.transmit) {
-                        await delay(250);
-                    }
+                    // if (or.order.transmit) {
+                    //     await delay(250);
+                    // }
+                    await delay(delayTm);
                     ib.placeOrder(or.order.orderId, or.contract, or.order);
                 }
             }
@@ -213,7 +219,7 @@ export class ConditionOrders {
                 }
 
                 if (customizeOrders) {
-                    orderAndContracts = customizeOrders(orderAndContracts);
+                    orderAndContracts = customizeOrders(orderAndContracts, 'version5');
                 }
 
                 transmitOrders(orderAndContracts)
