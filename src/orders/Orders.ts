@@ -139,6 +139,7 @@ export class Orders {
                         data: {
                             order: currentOrder,
                             orderStatus,
+                            id,
                         },
                     });
 

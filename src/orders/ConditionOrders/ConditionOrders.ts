@@ -204,18 +204,23 @@ export class ConditionOrders {
                 reject(err);
             }).once(EventName.nextValidId, (orderId: number) => {
                 orderAndContracts[0].order.orderId = orderId;
-                orderAndContracts[1].order.orderId = orderId + 1;
-                orderAndContracts[1].order.parentId = orderId;
-                orderAndContracts[2].order.orderId = orderId + 2;
-                orderAndContracts[2].order.parentId = orderId;
+                if (orderAndContracts[1]) {
+                    orderAndContracts[1].order.orderId = orderId + 1;
+                    orderAndContracts[1].order.parentId = orderId;
 
-                if (orderAndContracts[3]) {
-                    orderAndContracts[3].order.orderId = orderId + 3;
-                    orderAndContracts[3].order.parentId = orderId + 1;
-                }
-                if (orderAndContracts[4]) {
-                    orderAndContracts[4].order.orderId = orderId + 4;
-                    orderAndContracts[4].order.parentId = orderId + 1;
+                    if (orderAndContracts[2]) {
+                        orderAndContracts[2].order.orderId = orderId + 2;
+                        orderAndContracts[2].order.parentId = orderId;
+
+                        if (orderAndContracts[3]) {
+                            orderAndContracts[3].order.orderId = orderId + 3;
+                            orderAndContracts[3].order.parentId = orderId + 1;
+                        }
+                        if (orderAndContracts[4]) {
+                            orderAndContracts[4].order.orderId = orderId + 4;
+                            orderAndContracts[4].order.parentId = orderId + 1;
+                        }
+                    }
                 }
 
                 if (customizeOrders) {
