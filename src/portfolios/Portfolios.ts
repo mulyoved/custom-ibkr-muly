@@ -134,7 +134,7 @@ export class Portfolios {
 
                 // If forex use localSymbol
                 // if option use `symbol date` e.g 'AAPL  200918C00123750'
-                if (['CASH', 'OPT'].includes(contract.secType)) {
+                if (['CASH', 'OPT', 'FOP'].includes(contract.secType)) {
                     symbol = contract && contract.localSymbol;
                 }
 
